@@ -1,0 +1,10 @@
+#!/bin/bash
+# gzip a file and split it into parts
+
+if [ -z $3 ]; then
+  echo "tgzsplit <nameoffile> <splitsize> <splitname>
+  - gzip a file and split into parts - MB (2240 for DVD)"
+  exit
+fi
+
+tar czpvf - "$1" | split -b "$2"m - "$3".tgz.split.

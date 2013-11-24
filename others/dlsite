@@ -1,0 +1,10 @@
+#!/bin/bash
+# Download an entire website
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <url> - download an entire website"
+  exit
+fi
+
+wget --mirror -p --html-extension --convert-links "$1"

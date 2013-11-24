@@ -1,0 +1,51 @@
+#!/bin/bash
+# extract - extract common file formats
+
+# text color variables
+bldred='\e[1;31m' # red    - bold
+bldgrn='\e[1;32m' # green
+txtrst='\e[0m'    # text reset
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " extract <compressed-file.ext> <*location> - extracts common file formats"
+  exit; else
+  if [ -f $1 ]; then
+    echo -e "${bldgrn}*${txtrst} Extracting ${bldred}$1${txtrst}..."
+    case $1 in
+      *.7z)       7z x $1              ;;
+      *.bz2)      bunzip2 $1           ;;
+      *.deb)      ar vx $1             ;;
+      *.tar.gz)   if [ -z $2 ]; then
+                    tar xvf $1; else
+                    tar xvf $1 -C $2
+                  fi                   ;;
+      *.gz)       gunzip $1            ;;
+      *.tar)      if [ -z $2 ]; then
+                    tar xvf $1; else
+                    tar xvf $1 -C $2
+                  fi                   ;;
+      *.tar.bz2)  if [ -z $2 ]; then
+                    tar xvjf $1; else
+                    tar xvjf $1 -C $2
+                  fi                   ;;
+      *.tbz2)     if [ -z $2 ]; then
+                    tar xvjf $1; else
+                    tar xvjf $1 -C $2
+                  fi                   ;;
+      *.tar.xz)   if [ -z $2 ]; then
+                    tar xvf $1; else
+                    tar xvf $1 -C $2
+                  fi                   ;;
+      *.tgz)      if [ -z $2 ]; then
+                    tar xvzf $1; else
+                    tar xvzf $1 -C $2
+                  fi   ;;
+      *.rar)      7z x $1              ;;
+      *.zip)      unzip $1             ;;
+      *.Z)        uncompress $1        ;;
+      *)          echo "${bldred}*${txtrst} Not a supported file format"
+                                       ;;
+    esac
+  fi
+fi

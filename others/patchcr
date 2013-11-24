@@ -1,0 +1,17 @@
+#!/bin/sh
+# Create a patch from two seperate files
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <original-file> <new-file> <patchname>.patch - create a patch"
+  exit
+fi
+
+# Validate file existence
+for f in "$1" "$2"; do
+  if [ ! -f "$f" ]; then
+    echo "Filename "$f" does not exist, exiting."
+  fi
+done
+
+diff -rupN "$1" "$2" > "$3".patch

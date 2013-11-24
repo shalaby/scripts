@@ -1,0 +1,4 @@
+#!/bin/bash
+# Turn off pings, version detect, os detect, verbose
+
+nmap -sS -P0 -sV -O $@

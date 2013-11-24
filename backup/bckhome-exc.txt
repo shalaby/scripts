@@ -1,0 +1,11 @@
+/home/todd/Downloads/*
+/home/todd/.gvfs
+/home/todd/.ICEauthority
+/home/todd/.installjammerinfo
+/home/todd/.local/share/Trash/
+/home/todd/.mozilla/firefox/*/Cache/
+/home/todd/.mozilla/firefox/*/OfflineCache/
+/home/todd/.thumbnails/
+/home/todd/.Trash/
+/home/todd/.Xauthority
+/home/todd/.xsession-errors

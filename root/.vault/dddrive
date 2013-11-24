@@ -1,0 +1,46 @@
+#!/bin/bash
+# dddisk - create or restore a disk image of a drive or partition.
+
+#set -x
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Usage if full argument isn't given
+if [[ -z "$2" ]]; then
+  echo " ${0##*/} <image-name.dd.gz> </dev/device> - create/restore a disk-image"
+  exit
+fi
+
+# Test if device exists
+if [ ! -b "$2" ]; then
+  echo "$warn ${txtund}$2${txtrst} is not a drive or partition"
+  exit
+fi
+
+# Create image (or restore if file exists)
+if [[ -f "$1" ]]; then
+  echo "$warn Backup image exists."
+  echo "$warn ${txtbld}Restore${txtrst} ${txtund}"$1"${txtrst} to ${txtund}"$2"${txtrst}?"
+  echo -n "$warn (${txtbld}y${txtrst}/${txtbld}n${txtrst}) "
+  read restore
+  if [[ $restore == "y" ]]; then
+    echo "$info Restoring ${txtund}"$1"${txtrst} to ${txtund}"$2"${txtrst}"
+    gunzip -dc "$1" | dd of="$2" conv=noerror,sync bs=1024
+    else exit
+  fi
+  else
+  echo "$info Creating backup image of ${txtund}"$2"${txtrst}"
+  echo "$info This may take a long time because every block must be read."
+  # reduce the size by zeroing unused blocks.  First mount drive, cd to it then:
+  # dd if=/dev/zero of=hugefile; sync; rm hugefile; sync # credit Daenyth
+  dd if="$2" bs=1024k conv=noerror,sync | gzip -c > "$1"
+fi

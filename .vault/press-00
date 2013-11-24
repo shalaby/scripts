@@ -1,0 +1,44 @@
+#!/bin/bash
+# Archive and compress file and folders
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <file/dir> <*file/dir2> <*name>.tar.gz - archive file/folders"
+  exit
+fi
+
+# Prompt for filename
+while true; do
+  read -p " Enter archive filename: " filename
+  case $filename in
+
+
+# Extract last parameter (archive filename) from array and assign variable
+lastparam="${!#}"
+
+# Remove last paramerter (archive filename) for file/folder list variable
+length=$(($#-1))
+firstparams=${@:1:$length}
+
+# Check if files exists first, then archive them.
+if [[ ! -e $lastparam ]]; then
+  for exist in $firstparams; do
+    if [[ ! -e $exist ]]; then
+      echo "$warn File/directory ${txtund}$exist${txtrst} does not exist."
+      exit
+    fi
+  done
+  tar -czvpf "$lastparam".tar.gz $firstparams
+else
+  for exist in $@; do
+    if [[ ! -e $exist ]]; then
+      echo "$warn File/directory ${txtund}$exist${txtrst} does not exist."
+      exit
+    fi
+  done
+  tar -czvpf "$lastparam".tar.gz $@
+fi
+
+if [ -f $lastparam.tar.gz ]; then
+  echo "$pass Created archive ${bldred}$lastparam.tar.gz${txtrst}"
+fi

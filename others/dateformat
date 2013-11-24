@@ -1,0 +1,5 @@
+#!/bin/sh
+# Format of date for date and touch
+
+echo "date     MMDDhhmmYYYY"
+echo "touch -t YYYYMMDDhhmm"

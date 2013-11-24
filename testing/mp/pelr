@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+
+open(IN, $ARGV[0]) || die("Could not open file: " . $ARGV[0]);
+
+my $buffer="";
+
+foreach $line (<IN>) {
+        if ($line =~ /^source=/) {
+                $flag = 1;
+                $buffer .= $line;
+        } elsif ($flag == 1 && $line =~/\)/) {
+                $flag = 0;
+                $buffer .= $line;
+        } elsif ($flag == 1) {
+                $buffer .= $line;
+        } elsif ($flag == 0 && $line =~ /^md5sum=/) {
+                $flag = 2;
+                print $line;
+        } elsif ($flag == 2 && $line =~ /\)/) {
+                $flag = 0;
+                print $line;
+                if (length($buffer) > 0) {
+                        print $buffer;
+                        $buffer = "";
+                }
+        } else {
+                print $line;
+        }
+
+}

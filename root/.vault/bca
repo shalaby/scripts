@@ -1,0 +1,36 @@
+#!/bin/bash
+# Add file/folders to the tar include file (for backing up configurations)
+
+# Include file location
+scrpt_dir="/home/todd/.scripts/backup"
+incl_file="$scrpt_dir"/${0##*/}-inc.txt
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <file/folder/link> - add files... to include file for backing up configs"
+  exit
+fi
+
+# Check if include file exists
+if [ ! -f "$incl_file" ]; then
+  echo " Tar include file \""$incl_file"\" does not exist."
+  exit
+fi
+
+# Check if selection(s) exist
+for file in "$@"; do
+  if [ ! -e "$file" ]; then
+    echo " File \""$file"\" does not exist."
+    break
+  fi
+done
+
+# Check link valid, then add
+for file in "$@"; do
+  full_path=$(readlink -f "$file")
+  echo "$full_path" >> "$incl_file" && \
+  echo " Added \""$file"\" to bckcfg include file."
+done
+
+# Sort entries
+sort -u "$incl_file" -o "$incl_file"

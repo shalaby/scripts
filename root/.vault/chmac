@@ -1,0 +1,14 @@
+#!/bin/bash
+
+NIC=eth0
+
+MAC=`(date; cat /proc/interrupts) | md5sum | sed -r 's/^(.{10}).*$/\1/; s/([0-9a-f]{2})/\1:/g; s/:$//;'`
+
+lladdr=$(printf "%.2x:" $((($RANDOM % 256) & 252)); for _i in 1 2 3 4;
+do printf "%.2x:" $(($RANDOM % 256)); done; printf "%.2x" $(($RANDOM
+% 256)))
+
+ifconfig $NIC down
+sleep 2
+ifconfig $NIC up
+ifconfig $NIC hw ether $lladdr

@@ -1,0 +1,32 @@
+#!/bin/bash
+# blogimg - resizes images to 478 pixel width for blog.
+# http://www.imagemagick.org/www/command-line-options.html
+
+# Variables
+size=478
+imgname="$@"
+
+
+# Usage if no argument given
+if [[ -z $imgname ]]; then
+  echo " $prog <original-image> - resize image(s) to 478 pixel width for blog"
+  exit;
+fi
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Resize and rename
+for image in $imgname; do
+  blogimg="${image%.*}"-478.jpg
+  convert -resize "$size" -quality 95 "$image" "$blogimg"
+  echo "$pass Created: ${txtund}"$blogimg"${txtrst}"
+done

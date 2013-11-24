@@ -1,0 +1,18 @@
+#!/bin/bash
+# Resizes an image(s) by width value
+# http://www.imagemagick.org/www/command-line-options.html
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <width> <filename(s)> - resizes an image(s) by value width"
+  exit
+fi
+
+width=$1
+shift
+for img in "$@"; do
+  img_ext="${img##*.}"
+  convert -resize "$width" -quality 95 "$img" "${img%.*}"-$width.$img_ext && \
+  echo " Created "${img%.*}"-$width.$img_ext."
+done
+

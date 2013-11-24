@@ -1,0 +1,49 @@
+#!/bin/bash
+# pacbac - Create Official and Local lists of installed packages
+
+# Package list locations (official and local)
+pkglsdir=/home/todd/.bin/root/backup
+pkglsoff="$pkglsdir"/pkglist-off.txt
+pkglsloc="$pkglsdir"/pkglist-loc.txt
+
+# Exclude packages
+excldoff=()
+excldloc=(kdemultimedia-kmix-oss-svn firefox-pgo-alpha-hg penumbra-collection worldofgoo)
+
+# Text color variables
+if [ $(whoami) != "cron" ]; then
+txtund=$(tput sgr 0 1)          # Underline
+txtcyn=$(tput setaf 6)          # Cyan
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+fi
+
+# Check that backup folder exists
+if [ ! -d "$pkglsdir" ]; then
+  echo "$warn Package list directory doesn't exist: ("$pkglsdir")"
+  echo "$info Exiting"
+  exit
+fi
+
+# Continue?
+echo -n "Create list of official, and list of local packages? (${txtbld}y${txtrst}/${txtbld}n${txtrst}): "
+read listcreate
+
+# Create lists
+if [ $listcreate = "y" ]; then
+  # Create full list, remove local, base
+  echo "$info Creating list of official (core/extra/community packages) packages installed."
+  pacman -Qqe | grep -vx "$(pacman -Qqg base)" | grep -vx "$(pacman -Qqm)" > "$pkglsoff"
+  # Create list of local packages (includes the AUR)
+  echo "$info Creating list of local (includes AUR) packages installed."
+  pacman -Qqm > "$pkglsloc"
+  # Information
+  echo "$pass Official package list created: ${txtund}"$pkglsoff"${txtrst}"
+  echo "$pass Local package list created: ${txtund}"$pkglsloc"${txtrst}"
+fi

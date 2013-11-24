@@ -1,0 +1,45 @@
+#!/bin/bash
+# rm replacement for regular user.  Moves files to trash rather than
+# directly deleting them.
+
+reg_rm=/bin/rm
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <file, folder, link...> - rm replacement: move to trash rather than delete"
+  exit
+fi
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}*${txtrst}
+ques=${bldblu}?${txtrst}
+
+# Run 'rm' regular if root.
+if [[ $(whoami) == root ]]; then
+  $reg_rm "$@"
+  exit
+fi
+
+# Test if first entry is an option, if it is ignore.
+if [[ "$1" == -* ]]; then
+  echo " Ignored: "$bldred""$1""$txtrst""
+  shift
+fi
+
+# Trash each file independently, give feedback.
+for e in "$@"; do
+  if [ ! -e "$e" ] && [ ! -L "$e" ]; then
+    echo " Unexist: "$bldred""$e""$txtrst""
+    continue
+  fi
+  mv -t ~/.local/share/Trash/files --backup=t "$e"
+  echo " Trashed: "$bldblu""$e""$txtrst""
+done

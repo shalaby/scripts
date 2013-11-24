@@ -1,0 +1,183 @@
+#!/bin/bash
+# movietime - disables power savings to watch movies.
+
+# Movietime options
+#  Resume time - resume normal display pm and suspend after set time.
+#  Display blank time (as a warning before suspend).
+# 0 = disabled, time in minutes
+resumetime=0
+dispblanktime=0
+
+# Name of suspend script
+tmploc="/tmp"
+suspinhscript="$tmploc"/"movietime-suspend-inhibit"
+
+# Program name from it's filename.
+prog=${0##*/}
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+bldred=${txtbld}$(tput setaf 1) #  red
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Check that Xorg server is running
+if [[ -z $(ps aux | grep /usr/bin/X) ]]; then
+  echo "$warn The Xorg server is not running."
+  exit
+fi
+
+# Check if user is regular user
+if [ $(whoami) == "root" ]; then
+  echo "$warn You are the root user, must be a regular user."
+  exit
+fi
+
+# Current DPMS times (in minutes)
+dispdpms=$(xset -q | grep "DPMS is" | awk '{ printf $3 }') # Enab. or Disb.
+dispstand=$(xset -q | grep "^  Standby: " | awk '{ printf $2/60 }')
+dispsusp=$(xset -q | grep "^  Standby: " | awk '{ printf $4/60 }')
+dispoff=$(xset -q | grep "^  Standby: " | awk '{ printf $6/60 }')
+dispblank=$(xset -q | grep "^  timeout:  " | awk '{ printf $2/60 }')
+
+# Display help
+case $1 in
+  -h | --help | h | help )
+    # Help message.
+    echo
+    echo " $prog disables screen blanking and screensaver to allow viewing"
+    echo " a video.  Running the program again will enable them.  If the" 
+    echo " 'resumetime' variable is set, after that time $prog will resume "
+    echo " normal powersaving values."
+    echo
+
+    # Display current values of power management and movietime.
+    suspinhtest=$(ps aux | grep -v grep | grep $suspinhscript)
+    suspinhval=$([ -n "$suspinhtest" ] && echo "Disabled" || echo "Desktop settings")
+    
+    
+    echo "   ${txtbld}Current settings:${txtrst}   (in minutes, 0 = disabled)"
+    if [[ "$dispdpms" == "Disabled" ]]; then
+      echo "   DPMS:         $dispdpms"
+      echo
+    fi
+
+    if [[ "$dispdpms" == "Enabled" ]]; then
+      echo "   DPMS:         $dispdpms"
+      echo "   DPMS times:   Blank: ${dispblank}; Standby: ${dispstand}; Suspend: ${dispsusp}; Offtime: ${dispoff}"
+      echo "   Suspend:      $suspinhval"
+    fi
+    echo
+    echo "   ${txtbld}$prog settings${txtrst}:"
+    echo "   DPMS times:   Blank: $dispblanktime"
+    echo
+    exit
+    ;;
+  [a-g,i-z,A-G,I-Z,0-9,-]* )
+    echo " Use '-h' for help"
+    exit
+    ;;
+esac
+
+# Check that values for blank display time and resume time are numbers
+if [ $(echo $dispblanktime | sed 's/^[-+0-9][0-9]*//' | wc -c) != 1 ]; then
+  echo "$warn variable 'dispblanktime' is not a number.  Exiting."
+  exit
+fi
+
+if [ $(echo $resumetime | sed 's/^[-+0-9][0-9]*//' | wc -c) != 1 ]; then
+  echo "$warn variable 'resumetime' is not a number.  Exiting."
+  exit
+fi
+
+# Blanktime (if set): save original blanktime value
+blanktimefile=""$tmploc"/blanktime"
+if [ $dispblanktime -gt 0 ]; then
+  # Check if current blanktime value is the same as the set value
+  if [ -f $blanktimefile ] && [ $(cat $blanktimefile) == $dispblanktime ]
+  then
+    echo "$warn ${prog}'s set blanktime value matches your saved blanktime value."
+    echo -n "$warn Are you sure you want to leave it as $dispblanktime minutes? (${txtbld}y${txtrst}/${txtbld}n${txtrst}): "
+    read overwriteblank
+    if [[ $overwriteblank != [y] ]]; then
+      echo "$info You can set your blank time value again by:"
+      echo "$info ${txtbld}xset s seconds${txtrst}"
+      exit
+    fi
+  fi
+  # Create blanktime file in seconds
+  echo $[dispblank*60] > $blanktimefile
+  echo "$pass Saved blanktime value"
+fi
+
+# Scripts for: Suspend inhibit (default), resume time, suspend
+movtimesuspinh () {
+    echo '#!/bin/bash
+    while :; do
+    # Simulate user activity every five minutes
+    dbus-send --print-reply --type=method_call --dest=org.freedesktop.ScreenSaver /ScreenSaver org.freedesktop.ScreenSaver.SimulateUserActivity
+    sleep 60
+    done'
+}
+
+# Toggle display power savings, suspend scripts
+if [[ "$dispdpms" == "Enabled" ]]; then
+
+  # Disable screen saving and DPMS, set blank time (if set)
+  if [ $dispblank -gt 0 ]; then
+    xset s "$dispblanktime"; xset -dpms
+    echo "$pass Blank time set to $dispblanktime, DPMS disabled"
+  else
+    xset s off; xset -dpms
+    echo "$pass Blank time disabled, DPMS disabled"
+  fi
+
+  # Run suspend inhibit (unless resumetime or compsusp is set)
+  if [ $resumetime == 0 ] && [ $compsusptime == 0 ]; then
+    movtimesuspinh  > "$suspinhscript"
+    chmod u+x "$suspinhscript"
+    nohup "$suspinhscript" &> /dev/null &
+    echo "$pass Suspend inhibit script started"
+  fi
+
+  # Run resumetime script (if set)
+  if [ $resumetime -gt 0 ]; then
+    movietimeresume > "$resumescript"
+    chmod u+x "$resumescript"
+    nohup "$resumescript" &> /dev/null &
+    echo "$pass Resume script started, will resume normal suspend activities in $resumetime"
+  fi
+  
+  # Run suspend timer(if set)
+  if [ $compsuspendtime == "0" ]; then
+    movtimesusp > "$suspendscript"
+    chmod u+x "$suspendscript"
+    nohup "$suspendscript" &> /dev/null &
+    echo "$pass Suspending computer in $compsusptime"
+  fi
+
+else
+
+  # Enable screen saving and DPMS, re-set blank time (if set)
+  if [ $dispblank -gt 0 ]; then
+    if [ -f "$blanktimefile" ]; then
+      xset s $(cat "$blanktimefile") && rm "$blanktimefile"
+      echo "$pass Blank time value restored"
+    else
+      echo "$warn no Blank time value file found"
+    fi
+    xset +dpms && echo "$pass DPMS enabled"
+  else
+    xset s on; xset +dpms
+    echo "$pass Blank time enabled, DPMS enabled"
+  fi
+
+  
+
+# Notes
+# pgrep to get pid?

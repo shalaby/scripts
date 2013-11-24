@@ -1,0 +1,29 @@
+#!/bin/bash
+# Archive and compress file and folders
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+#echo " ${0##*/} <file/dir> <*file/dir2> <*name>.tar.xz - archive file/folders"
+  echo " ${0##*/} <file/dir> <*file/dir2> - archive and compress files and dirs"
+  exit
+fi
+
+# Check if selection(s) exists
+for a in "$@"; do
+  if [ ! -f "$a" ]; then
+    echo " Selection \""$@"\" does not exist."
+    exit
+  fi
+done
+
+# Prompt for filename
+while true; do
+  read -p " Enter archive filename (minus extension): " filename
+  if [ -n "$filename" ]; then
+    break
+  fi
+done
+
+# Create archive
+tar -c --xz -f "$filename".tar.xz "$@" && \
+echo " Created "$filename".tar.xz"

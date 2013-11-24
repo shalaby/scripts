@@ -1,0 +1,124 @@
+#!/bin/bash
+# Common makepkg building tasks
+
+mntr_info="Gently <toddrpartridge@gmail.com>"
+
+usage () {
+  echo " ${0##*/} <option> - common makepkg building tasks
+  b - build package (install dependencies if required)
+  m - update md5sums
+  r - remove previous build directories
+  s - create source files for upload
+  t - create PKGBUILD template
+  ---
+  a - AUR submit"
+}
+
+pkgbldtst () {
+  [ ! -f PKGBUILD ] && echo " No PKGBUILD in directory." && exit
+}
+
+md5add () {
+  # Delete previous md5sum entries
+  sed -i "/^.*'[a-z0-9]\{32\}'.*$/d" PKGBUILD
+  sed -i "/^md5sums/,/$/d" PKGBUILD
+
+  # Save then delete the creation section (build/check/package section)
+  if   [[ $(grep ^build\(\)   PKGBUILD) ]]; then crtn_strt=build\(\)
+  elif [[ $(grep ^check\(\)   PKGBUILD) ]]; then crtn_strt=check\(\)
+  elif [[ $(grep ^package\(\) PKGBUILD) ]]; then crtn_strt=package\(\)
+  fi
+  sed -e '/'$crtn_strt'.*$/,$!d' PKGBUILD > /tmp/PKGBUILD.tmp
+  sed -i '/'$crtn_strt'.*$/,$d'  PKGBUILD
+
+  # Remove trailing blank lines so md5sums line follows last line
+  while [ "$(tail -n 1 PKGBUILD)" == "" ]; do
+    sed -i '$d' PKGBUILD
+  done
+
+  # Add md5sums
+  makepkg -g >> PKGBUILD
+
+  # Add blank line to seperate variable and build section
+  echo >> PKGBUILD
+
+  # Re-append build section
+  cat /tmp/PKGBUILD.tmp >> PKGBUILD
+
+  # Remove trailing blank lines to clean up
+  while [ "$(tail -n 1 PKGBUILD)" == "" ]; do
+    sed -i '$d' PKGBUILD
+  done
+
+  echo " Added md5sums"
+}
+
+bldsource () {
+  makepkg -f --source
+}
+
+bldsubmit () {
+  while true; do
+    pkgname=$(grep ^pkgname\= PKGBUILD | sed 's/pkgname=//')
+    pkgver=$(grep ^pkgver\= PKGBUILD   | sed 's/pkgver=//')
+    pkgrel=$(grep ^pkgrel\= PKGBUILD   | sed 's/pkgrel=//')
+    pbs_nm=$pkgname-$pkgver-$pkgrel.src.tar.gz
+    [ -f $pbs_nm ] || \
+    { echo " Package build source \""$pbs_nm"\" not found"; exit 1; }
+    read -p " Upload source ("$pbs_nm") to the AUR? (y/n): " yn
+    case $yn in
+    [Yy]* ) ctgrs=$(burp -c help | sed '1d' | sed '$d' | sed 's/^\t//g')
+            printf " Select category:\n"
+            select ctgr in $ctgrs; do
+              test -n $ctgr && break
+              echo " Select 1, 2, ..."
+            done
+            burp -c $ctgr $pbs_nm
+            break ;;
+    [Nn]* ) break ;;
+    *     ) echo "  Answer 'y' for yes, 'n' for no."
+    esac
+  done
+}
+
+bldtmpl () {
+  [ ! -f /usr/share/pacman/PKGBUILD.proto ] && \
+  echo " /usr/share/pacman/PKGBUILD.proto does not exist" && exit
+  cp /usr/share/pacman/PKGBUILD.proto PKGBUILD
+  # Delete description
+  sed -i '1,5d' PKGBUILD
+  # Change 'Maintainer' name and email
+  sed -i "s/^# Maintainer\: .*$/# Maintainer: $mntr_info\n/" PKGBUILD
+  # Use directory name as pkgname
+  sed -i "s/^pkgname=.*$/pkgname=$(basename $(pwd))/" PKGBUILD
+  # Delete md5sums comment
+  sed -i "s/^md5sums=.*$/md5sums=()/" PKGBUILD
+  echo " Created PKGBUILD template"
+  # Prompt to copy prototype .install script 
+  while true; do
+    read -p " Copy prototype .install script? (y/n): " yn
+    case $yn in
+      [Yy] )  cp /usr/share/pacman/proto.install $(basename $(pwd)).install 
+              break 2;;
+      [Nn] )  break 2;;
+      * )     echo " Answer (y)es or (n)o."
+    esac
+  done
+}
+
+case $1 in
+  b ) pkgbldtst
+      makepkg -sf                                                       ;;
+  m ) pkgbldtst
+      md5add                                                            ;;
+  r ) if [ -d src ]; then rm -rf src/ && echo " Removed src/ dir"; fi
+      if [ -d pkg ]; then rm -rf pkg/ && echo " Removed pkg/ dir"; fi   ;;
+  s ) pkgbldtst
+      bldsource                                                         ;;
+  t ) bldtmpl                                                           ;;
+# ---
+  a ) prg=burp; hash $prg 2>&- || { echo " Requires $prg program" && exit; }
+      pkgbldtst
+      bldsubmit                                                         ;; 
+  * ) usage
+esac

@@ -1,0 +1,76 @@
+#!/bin/bash
+# Create new profile and transfer settings (fixes certain
+# problems when there are errors in Firefox settings).
+
+ffsettingsdir=~/.mozilla/firefox/
+
+# Setting files to restore (files to copy): 
+# (http://kb.mozillazine.org/Transferring_data_to_a_new_profile_-_Firefox)
+files="content-prefs.sqlite
+       cookies.sqlite
+       formhistory.sqlite
+       key3.db
+       mimeTypes.rdf
+       permissions.sqlite
+       places.sqlite
+       searchplugins                                                            
+       signons.sqlite
+       webappsstore.sqlite"
+
+# Change to Firefox settings directory
+if [ -d "$ffsettingsdir" ]
+  then
+    cd  "$ffsettingsdir"
+  else
+    echo " Firefox settings directory "$ffsettingsdir" does not exist"
+    exit
+fi
+
+# Select current profile directory
+printf "Select current Firefox profile settings directory:\n"
+select dir_current in */
+  do
+    test -n "$dir_current" && break
+    echo " Select 1, 2, ..."
+  done
+
+# Check that all listed setting files exist
+for f in $files
+  do
+    if [ ! -e "$dir_current""$f" ]
+      then
+        echo "File "$f" does not exist, exiting."
+        exit
+    fi
+  done
+
+# Rename current profile directory
+mv "${dir_current%/}"{,.bck}
+dir_old="${dir_current%/}".bck
+echo "Renamed old profile directory to: "$dir_old""
+
+# Rename profile list file
+if [ -f profiles.ini ]
+  then
+    mv -f profiles.ini{,.bck}
+fi
+
+# Create new profile
+read -p "Name of new profile: " nw_prfl_nm
+firefox -CreateProfile "$nw_prfl_nm"
+
+# Select new profile directory
+printf "Select NEW Firefox profile settings directory:\n"
+select dir_new in */
+  do
+    test -n "$dir_new" && break
+    echo " select 1 , 2 ..."
+  done
+
+# Copy settings (files) from old profile to new profile
+cd "$dir_old"
+for f in $files
+  do
+    cp -a "$f" "$ffsettingsdir"/"$dir_new"/
+  done
+

@@ -1,0 +1,38 @@
+#!/bin/bash
+# Switch between AMD's integrated video card and discrete video card
+
+# Active GPU
+gpu_active=$(aticonfig --px-list | cut -d " " -f 2)
+
+# Restart X.org server
+xorg_restart () {
+  gnome-session-quit --logout # GNOME, will still prompt if unsaved
+                              # --no-prompt causing problems
+  # pkill X
+}
+
+if [[ $gpu_active = Discrete ]]; then
+  gpu_inactv=Integrated
+  while true; do
+    read -p " Switch to "$gpu_inactv" GPU (requires X.org server restart)? (y/n): " yn
+    case $yn in
+      [Yy] ) sudo aticonfig --px-igpu
+             xorg_restart
+             break 2      ;;
+      [Nn] ) break 2      ;;
+      *    ) echo "  Answer (y)es or (n)o."
+    esac
+  done
+else
+  gpu_inactv=Discrete
+  while true; do
+    read -p " Switch to "$gpu_inactv" GPU (requires X.org server restart)? (y/n): " yn
+    case $yn in
+      [Yy] ) sudo aticonfig --px-dgpu
+             xorg_restart 
+             break 2      ;;
+      [Nn] ) break 2      ;;
+      *    ) echo "  Answer (y)es or (n)o."
+    esac
+  done
+fi

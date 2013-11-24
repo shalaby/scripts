@@ -1,0 +1,132 @@
+#!/bin/bash
+# debian install snort,apache, base install
+# download, extract, and build
+# for clean install, no checks provided
+
+# Install all necessary programs and libraries
+# Adding newer adodb manually (libphp-adodb)
+# libssl-dev is needed for barnyard compile
+dm i build-essential libpcap0.8-dev libmysqlclient15-dev mysql-client-5.0 mysql-server-5.0 bison flex apache2 libapache2-mod-php5 php5-gd php5-mysql php-pear iptables-dev libnet0-dev bridge-utils oinkmaster libssl-dev && \
+# Create build directory
+mkdir -p ~/.src/snort && \
+cd ~/.src/snort && \
+# Get and unpack all packages that need to be built
+wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-7.9.tar.gz && \
+tar -xvf pcre-7.9.tar.gz && \
+# libnet requires version 1.0.x - libnet locations:
+wget ftp://ftp.port80.se/gentoo/distfiles/libnet-1.0.2a.tar.gz && \
+#wget ftp://ftp.prz.rzeszow.pl/pub/gentoo/source/distfiles/libnet-1.0.2a.tar.gz && \
+tar -xvf libnet-1.02a.tar.gz && \
+# 2.8.3.2 link not available, 2.8.4.1 also available
+wget http://dl.snort.org/snort284/snort-2.8.4.tar.gz && \
+tar -xvf snort-2.8.4.tar.gz && \
+## Build and install ##
+# PCRE
+cd ~/.src/snort/pcre-7.9 && \
+./configure --prefix=/usr && \
+make && \
+make install && \
+# Libnet
+cd ~/.src/snort/libnet && \
+./configure && \
+make && \
+make install && \
+cd ~/.src/snort/snort-2.8.4 && \
+# Snort
+./configure --prefix=/usr --sysconfdir=/etc/snort --enable-dynamicplugin --with-mysql --enable-inline --with-libipq-includes=/usr/include/libipq/ && \
+make && \
+make install && \
+# Dynamic example rule is broke for now (not sure if it's needed anyhow)
+mv /usr/lib/snort_dynamicrules/lib_sfdynamic_example_ru.so{,.broke} && \
+## Installing Configurations ##
+cd etc/ && \
+# Copy configurations and maps, make original snort.conf.org
+cp *.conf *.map *.config /etc/snort && \
+cp snort.conf /etc/snort/snort.conf.org && \
+# Allow enabling and disabling of decoder and preprocessor events on a
+# rule by rule bases.
+cd ../preproc_rules && \
+cp decoder.rules preprocessor.rules /etc/snort/preproc_rules && \
+# make necessary directories
+mkdir -p /etc/snort/rules /etc/snort/preproc_rules /var/log/snort /var/run/snort && \
+# create snort user/group
+groupadd snort && \
+useradd snort -g snort -s /usr/sbin/nologin && \
+chown snort:snort /var/log/snort && \
+## Configure /etc/snort/snort.conf ##
+# Set network (tune sensor)
+sed -i -e 's:var HOME_NET any:#var HOME_NET any \
+var HOME_NET 192.168.89.0/24:g' /etc/snort/snort.conf && \
+sed -i -e 's:var EXTERNAL_NET any:#var EXTERNAL_NET any \
+var EXTERNAL_NET !HOME_NET:g' /etc/snort/snort.conf && \
+# Set lib path directory
+sed -i 's:/usr/local/lib:/usr/lib:g' /etc/snort/snort.conf && \
+# Absolute path for rules directory
+sed -i 's:var RULE_PATH ../rules:var RULE_PATH /etc/snort/rules:g' \
+/etc/snort/snort.conf && \
+# Absolute path for preprocessor/decoder rule location
+sed -i 's:PREPROC_RULE_PATH ../preproc_rules:PREPROC_RULE_PATH /etc/snort/preproc_rules:g' /etc/snort/snort.conf && \
+# Enable preprocessor/decoder rules
+sed -i -e 's:^# include $PREPROC_RULE_PATH:include $PREPROC_RULE_PATH:g' \
+/etc/snort/snort.conf && \
+sed -i -e 's:^# dynamicdetection directory:dynamicdetection directory:g' \
+/etc/snort/snort.conf && \
+# Remove trailing '/'s
+sed -i -e 's:snort_dynamicpreprocessor/$:snort_dynamicpreprocessor:g' \
+/etc/snort/snort.conf && \
+sed -i -e 's:snort_dynamicrules/$:snort_dynamicrules:g' \
+/etc/snort/snort.conf && \
+# Make it clear where these configs are
+sed -i -e 's:^include classification.config:include /etc/snort/classification.config:g' \
+/etc/snort/snort.conf && \
+sed -i -e 's:^include reference.config:include /etc/snort/reference.config:g' \
+/etc/snort/snort.conf && \
+# I have a low memory computer 1G, preferably 2G for snort 2.8.4
+# ac-sparsebands allows low memory and high performance
+sed -i -e 's:# config detection: search-method lowmem:# config detection: search-method lowmem\
+config detection: search-method ac-sparsebands:g' && \
+#Disable all rule files by default.
+# For optimization it is best to choose the rules you need, but snorts
+# default isn't bad
+#sed -i 's:include $RULE_PATH:#include $RULE_PATH:g' \
+#/etc/snort/snort.conf && \
+## Configuring Oinkmaster ##
+# Create backup (Debian creates an abbreviated, dumbed down version anyway)
+mv /etc/oinkmaster.conf /etc/oinkmaster.conf.debian && \
+# Restore the original
+gunzip -c /usr/share/doc/oinkmaster/examples/oinkmaster.conf.gz >> /etc/oinkmaster.conf && \
+# Use external (non-perl) binaries (i.e. tar, wget...)
+sed -i 's:# use_external_bins = 0:use_external_bins = 1:g' \
+/etc/oinkmaster.conf && \
+# Fix path to find the external binaries
+sed -i 's`path = /bin:/usr/bin:/usr/local/bin`path = /sbin:/usr/sbin:/bin:/usr/bin`g' /etc/oinkmaster.conf && \
+# Set temporary directory - Debian uses /var/run/oinkmaster
+sed -i 's:# TMPDIR or TEMPDIR, or otherwise use "/tmp" if none of them was set.:# TMPDIR or TEMPDIR, or otherwise use "/tmp" if none of them was set. i\
+tmpdir = /tmp:g' /etc/oinkmaster.conf && \
+# Community depracated
+sed -i 's:# Example for Community rules:# (Depracated - merged in VRT rules) Example for Community rules:g' /etc/oinkmaster.conf && \
+# Add Snort VRT rules (registered-user release), Emerging threats
+sed -i 's`# url = http://www.bleedingsnort.com/bleeding.rules.tar.gz`# url = http://www.bleedingsnort.com/bleeding.rules.tar.gz \
+\
+# Snort-current VRT (registered-user release) rules \
+url = http://www.snort.org/pub-bin/oinkmaster.cgi/dbd8219fdf94580093cd2ea77466021e0527f469/snortrules-snapshot-CURRENT.tar.gz \
+\
+# Emerging Threats rules \
+url = http://www.emergingthreats.net/rules/emerging.rules.tar.gz`g' \
+/etc/oinkmaster.conf && \
+# Modify all rules from alert to drop
+sed -i -e 's:# modifysid exploit.rules, snmp.rules, 1171 "^#" | "":# modifysid exploit.rules, snmp.rules, 1171 "^#" | "" \
+\
+# Snort inline-mode - modify all rules from alert to drop \
+modifysid * "^alert" | "drop":g' /etc/oinkmaster.conf && \
+# Download rules
+oinkmaster.pl -C /etc/oinkmaster.conf -o /etc/snort/rules && \
+# Snort.conf looks for local rules
+touch /etc/snort/rules/local.rules && \
+# Secure apache to only run on localhost
+sed -i -e 's/LISTEN 80/LISTEN 127.0.0.1:80/g' /etc/apache2/ports.conf && \
+sed -i -e 's/LISTEN 443/LISTEN 127.0.0.1:443/g' /etc/apache2/ports.conf && \
+# Test Snort
+echo "test snort with:
+snort -Q -v -c /etc/snort/snort.conf"
+

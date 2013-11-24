@@ -1,0 +1,7 @@
+#!/bin/bash
+# Trace incoming packets
+
+bgcmd tcpdump -v -s 0 -w /tmp/packet-trace.pcap
+
+
+

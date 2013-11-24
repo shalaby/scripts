@@ -1,0 +1,17 @@
+#!/bin/bash
+# Create an iso9660 image from a disk or defined files
+
+iso_name="$(date +%F-%R).iso" # filename of ISO
+files_dirs="$@"               # files and directories
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <cd|dvd|/path/to/files,directories> - Create an ISO from a disk or defined files and directories." | fmt -c -u -w 80
+  exit
+fi
+
+case $1 in
+  cd  ) dd if=/dev/cd  of="$iso_name"                                         ;;
+  dvd ) dd if=/dev/dvd of="$iso_name"                                         ;;
+  *   ) mkisofs -o        "$iso_name" -lrj "$files_dirs"                      ;;
+esac

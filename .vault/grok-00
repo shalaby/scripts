@@ -1,0 +1,74 @@
+#!/bin/bash
+# Search file(s) for keyword
+
+# Text color variables
+bldwht='\e[1;37m'       # white
+txtwht='\e[0;37m'       # white
+txtund=$(tput sgr 0 1)  # underline
+txtgrn='\e[0;32m'       # green
+txtylw='\e[0;33m'       # yellow
+txtrst='\e[0m'          # text reset
+
+# Display usage if no parameters given
+if [[ -z "$1" ]]; then
+  echo -e " grok <search> <*path-or-file> - search for keyword in file(s) (recursive)"
+  exit
+fi
+
+echo -e "${bldwht}*${txtrst} Searching..."
+
+case $1 in
+  # Only show filenames that match search
+  f ) # Search current directory (when no file path is given)
+      shift
+      if [[ -z "$2" ]]; then
+        curdirsrch=$(grep -ilr "$1" `pwd` 2>&1 | grep -v "No such" | grep -v "Permission denied" | sort | sed -e "s:`pwd`/: :g")
+        if [[ -z "$curdirsrch" ]]; then
+          echo -e "${txtylw}!${txtrst} ${txtwht}"$1"${txtrst} was not found in any files in ${txtund}`pwd`${txtrst}"
+          else
+          echo -e "${txtgrn}+${txtrst} ${txtwht}"$1"${txtrst} was found in these files: (${txtund}`pwd`${txtrst})"
+          echo ""
+          echo -e "$curdirsrch\n"
+        fi
+        else
+        # Search remote directory (when file path is given)
+        remdirsrch=$(grep -ilr "$1" "$2" 2>&1 | grep -v "No such" | grep -v "Permission denied" | sort | sed -e "s:^$2/: :g")
+        if [[ -z $remdirsrch ]]; then
+          echo -e "${txtylw}!${txtrst} ${txtwht}"$1"${txtrst} was not found in any files in ${txtund}"$2"${txtrst}"
+          else
+          echo -e "${txtgrn}+${txtrst} ${txtwht}"$1"${txtrst} was found in these files in ${txtund}"$2"${txtrst}:"
+          echo ""
+          echo -e "$remdirsrch\n"
+        fi
+      fi
+      ;;
+  # Show contents of each file that match search
+  * ) # Search current directory (when no file path is given)
+      if [[ -z "$2" ]]; then
+        curdirsrch=$(grep -ilr "$1" `pwd` 2>&1 | grep -v "No such" | grep -v "Permission denied" | sort | sed -e "s:`pwd`/: :g")
+        if [[ -z "$curdirsrch" ]]; then
+          echo -e "${txtylw}!${txtrst} ${txtwht}"$1"${txtrst} was not found in any files in ${txtund}`pwd`${txtrst}"
+          else
+          for file in $curdirsrch; do
+            echo ""
+            echo -e " ${txtund}"$file"${txtrst}:"
+            grep -i --colour=always "$1" "$file"
+          done
+          echo ""
+        fi
+        else
+        # Search remote directory (when file path is given)
+        remdirsrch=$(grep -ilr "$1" "$2" 2>&1 | grep -v "No such" | grep -v "Permission denied" | sort)
+        if [[ -z $remdirsrch ]]; then
+          echo -e "${txtylw}!${txtrst} ${txtwht}"$1"${txtrst} was not found in any files in ${txtund}"$2"${txtrst}"
+          else
+          for file in $remdirsrch; do
+            echo ""
+            echo -e " ${txtund}"$file"${txtrst}:"
+            grep -i --colour=always "$1" "$file"
+          done
+          echo ""
+        fi
+      fi
+      ;;
+esac

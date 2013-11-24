@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Rename folders in correct order using zero padding
+# http://www.unix.com/shell-programming-scripting/132557-zero-padding-while-renaming-files.html
+
+pre=1
+cnt=1
+
+for folder in *
+  do
+    if [ -d "$folder" ]; then
+      ext=${file##*.}
+      printf -v pad "%07d" "$cnt"
+      mv "$folder" "${pre}${pad}"
+      cnt=$(( $cnt + 1 ))
+    fi
+  done
+exit 0

@@ -1,0 +1,11 @@
+#!/bin/bash
+# Reload desktop (file manager, launcher and panel), used mainly for getting 
+# Correct text size...
+
+# Unity &> /dev/null & disown
+
+nautilus -q && sleep 2 && bgcmd nautilus -n
+pkill unity-panel
+pkill unity-window
+sleep 1
+unity-window-decorator &> /dev/null & disown

@@ -1,0 +1,40 @@
+#!/bin/bash
+# Cleans database of unused space and re-indexes the database
+# (improves firefox responsiveness but inherant risks to stability).
+
+# Program(s) required
+progs_req=(sqlite3)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+ffsettingsdir=~/.mozilla/firefox/
+
+# Change to Firefox settings directory
+if [ ! -d "$ffsettingsdir" ]
+  then
+    echo " Firefox settings directory "$ffsettingsdir" does not exist"
+    exit
+  else
+    cd "$ffsettingsdir"
+fi
+
+# Select current profile directory
+printf " Select current Firefox profile settings directory:\n"
+select dir_current in */
+  do
+    test -n "$dir_current" && break
+    echo " select 1 , 2 ..."
+  done
+
+# Get permission, clean sqlite databases
+read -p " Can be unsafe, do you wish to procede? (Y/n): "  vacuum
+if [ "$vacuum" = "Y" ]; then
+  echo " Purging and Re-indexing databases"
+  find "$dir_current" -name "*.sqlite" -exec sqlite3 "{}" vacuum \; -exec \
+  sqlite3 "{}" reindex \;
+else
+  echo " Exiting."
+  exit 100
+fi

@@ -1,0 +1,79 @@
+#!/bin/bash
+# Create a github gist repository for sharing scripts/configs on blog
+
+# Base directory, repository parent directory
+base_dir=""$HOME"/"
+repo_par=""$HOME"/.github-gist/"
+
+# File list (File list order must match repository order)
+files=('/home/todd/.scripts/root/arch/pm'
+       '/home/todd/.scripts/others/github-sync-scripts'
+       '/home/todd/.scripts/vault/unity-effects')
+
+# Repositories (repo_local_name repo_address)
+repos=('git@gist.github.com:2840389.git'
+       'git@gist.github.com:2839879.git'
+       'git@gist.github.com:2840553.git')
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <*a> <file> - Add or update a gist repo for sharing on blog"
+  exit
+fi
+
+# Program(s) required
+progs_req=(gist)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+#
+case $1 in
+ a )  # Upload new files to gist
+      shift
+      for fl_pth in "$@"; do
+        # Change dir. to file location; get filename w/o path (for gist prog)
+        cd $(dirname "$fl_pth")
+        file="$(basename "$fl_pth")"
+        # Upload file (cut second line to use as description); edit output
+        # from http address to git address
+        gist -t sh -d "$(sed -n '2p' "$file" | sed 's/^# //')" "$file" \
+        | sed -e 's|https://| git address: git@|' -e 's|.com/\(.*\)|.com:\1.git|' && \
+        echo " filenm path: $(readlink -f "$fl_pth")"
+      done
+      echo " * Enter file path and git address in config to be able to update"
+      ;;
+ u )  # Create parent directory for local repos; rm prev. b4 cp'ing new files
+      cd
+      [ -d "$repo_par" ] && rm -rf "$repo_par"
+      mkdir -p "$repo_par"
+      # Create local repository directories, cp files
+      for file in "${files[@]}"; do
+        # Create parent directory for files
+        cd "$repo_par" || exit
+        # Create local repo dir. per file (each gist will needs its own repo)
+        repo_dir="$(basename "$file")"
+        [ ! -d "$repo_dir" ] && mkdir "$repo_dir"
+        cd "$repo_dir"
+        # Copy file
+        cp -a "$file" .
+      done
+      # Update gist files
+      n=${#files[@]} # number of elements in array (needed to sync two arrays)
+      for (( i=0; i<n; i++ )); do
+        cd "$repo_par" || exit
+        repo_dir="$(basename "${files[$i]}")"
+        cd "$repo_dir"
+        # Initialize local repository; define remote repo; add file to git
+        git init
+        git remote add "$repo_dir" "${repos[$i]}"
+        git add . 2> /dev/null
+        # Record changes to all files, rm those not in index, and add commit msg
+        git commit -a -m "weekly update - $(date "+%F")" || exit
+        # Sync local repository to github gist repository
+        #? git push -u "$repo_dir" master
+        git push --force "$repo_dir" master && \
+        echo " Synced local repository ""${repos[$i]}"" to gist repository"
+      done
+esac

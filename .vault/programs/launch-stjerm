@@ -1,0 +1,3 @@
+#!/bin/bash
+
+stjerm -ah false -p topright -tf false -w 510 -h 300 -ab none -b thin -c0 2e3436 -c1 cc0000 -c2 68926b -c3 C4a000 -c4 3465a4 -c5 75507b -c6 06989a -c7 d3d7cf -c8 555753 -c9 cc0c0c -c10 67CF00 -c11 fce94f -c12 89aed6 -c13 ad7Fa8 -c14 34e2e2 -c15 eeeeec -c16 2e3436

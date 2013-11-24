@@ -1,0 +1,23 @@
+#!/bin/bash
+# Sync audio folders to PSP (limitation of one sub-directory)
+
+music_dir=~/Audio/Music             # Music     directory
+audbk_dir=~/Audio/Audiobooks        # Audiobook directory
+psp_music_dir=/media/disk/PSP/MUSIC # PSP audio directory
+
+# Basic check to see if PSP is plugged in
+if [ ! -d "$psp_music_dir" ]; then
+  echo " PSP appears not to be plugged in ("$psp_music_dir") does not exist"
+  exit
+fi
+
+# Erase PSP audio files for clean sync
+read -p " Erase all Audio on PSP and sync new? (Y/n): " Yn
+case $Yn in
+  [Y]*  ) echo " Removing audio files from PSP"
+          rm -rf "$psp_music_dir"/*                                           ;;
+esac
+  
+# Add Music/Audiobook subdirectories to PSP MUSIC directory
+rsync -azv $music_dir/*/* $psp_music_dir
+rsync -azv $audbk_dir/*/* $psp_music_dir

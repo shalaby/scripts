@@ -1,0 +1,12 @@
+#!/bin/bash
+# Define normalization levels in mp3s (album-specifically)
+
+audio_dir=~/Audio                       # Audio directory
+sub_dir_inc=(Audiobooks Music Podcasts) # Sub-directories good to keep seperate
+
+cd "$audio_dir"
+for d in "${sub_dir_inc[@]}"; do
+  # -a keep gain even relative to albums, -k lower to not clip, -T modify orgin
+  # -d adjust volume by decibel amount (volume low on PSP)
+  find "$d" -name "*.mp3" -exec mp3gain -a -k -T -d 4 "{}" \;
+done

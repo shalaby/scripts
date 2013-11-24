@@ -1,0 +1,47 @@
+#!/bin/bash
+# backup-home - backup the home directory
+
+part_home=/dev/hda3      # partition (home)
+part_back=/dev/sda1      # partition (backup)
+part_hm=${part_home##*/} # partition short name
+part_bk=${part_back##*/}
+
+# Check if partitions are valid
+for p in $part_hm $part_bk; do 
+  vld_prts=$(awk '{print $4}' /proc/partitions | grep [0-9])            
+  if [[ -n $(echo $vld_prts | grep -w $p) ]]; then                
+    echo " \"/dev/$p\" appears to be a valid partition."
+  else
+    echo " \"/dev/$p\" does not appear to be a valid partition."
+    exit
+  fi                                                                            
+done
+
+# Set mount points
+if [[ -z $(mount | grep ^$part_home) ]]; then # home partition
+  mnt_home=/media/$part_hm
+  [ ! -d $mnt_home ] && mkdir -p $mnt_home
+  echo " Mount point for \"$part_home\" set to \"$mnt_home\"."
+else
+  mnt_home=$(mount | grep ^$part_home | awk '{print $3}')
+  echo " Mount point already found for \"$part_home\" at \"$mnt_home\"."
+fi
+
+if [[ -z $(mount | grep ^$part_back) ]]; then # backup partition
+  mnt_back=/media/$part_bk
+  [ ! -d $mnt_back ] && mkdir -p $mnt_back
+  echo " Mount point for \"$part_back\" set to \"$mnt_back\"."
+else
+  mnt_back=$(mount | grep ^$part_back | awk '{print $3}')
+  echo " Mount point already found for \"$part_back\" at \"$mnt_back\"."
+fi
+
+# Mount partitions
+mount $part_home $mnt_home && echo " Mounted \"$part_home\" to \"$mnt_home\"
+mount $part_back $mnt_back && echo " Mounted \"$part_back\" to \"$mnt_back\"
+
+date_fmt=$(date +%F)                           # date format YYYY-MM-DD
+bckp_dir=$mnt_back/backup-rsync/home/$date_fmt
+
+echo " Backing up home to \"$bckp_dir\".
+rsync -axS /home/ $bckp_dir

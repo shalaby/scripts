@@ -1,0 +1,25 @@
+#!/bin/bash
+# Create temporary file(s) and open in gedit
+
+# Program required: gedit test
+hash gedit 2>&- || { echo " Program required \"gedit\" not installed"; exit 1; }
+
+# Display usage
+if [[ $1 == -h ]]; then
+  echo "gt [name*] [name*]... - create temporary file(s) and open in gedit"
+  exit 1; fi
+
+tmp_dir="/home/$USER/.local/share/Trash/files"
+time="$(date +%m%d%H%M)"
+
+# Trash directory create if doesn't exist
+[ ! -d "$tmp_dir" ] && mkdir -p "$tmp_dir"
+
+# Open temporary file(s) in gedit
+if [[ -n $1 ]]; then
+  for name in "$@"; do
+    nohup gedit "$tmp_dir"/"$time""$name" &> /dev/null &
+  done
+else
+  nohup gedit "$tmp_dir"/"$time" &> /dev/null &
+fi

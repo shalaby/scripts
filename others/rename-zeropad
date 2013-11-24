@@ -1,0 +1,26 @@
+#!/bin/bash
+# Rename files and folders with numbering to zero-padded numbering.
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <dir> <file> <...>"
+  echo "   Rename files and folders with numbering to numbering that is zero padded."
+  echo "   Script is useful for correct file ordering (e.g. file1 to file01)"
+  exit
+fi
+
+# Show example first
+echo " Files will be renamed as such:"
+rename -n 's/\d+/sprintf("%02d",$&)/e' "$@"
+
+# Ask permission to change
+while true; do
+  read -p " Rename files as listed? (Y/n): " Yn
+  case $Yn in
+    [Y]*  ) rename 's/\d+/sprintf("%02d",$&)/e' "$@"
+            break                                       ;;
+    [Nn]* ) break                                       ;;
+    *     ) echo "* Answer (Y)es or (N/n)o."            ;;
+  esac
+done
+

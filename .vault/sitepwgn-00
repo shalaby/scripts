@@ -1,0 +1,30 @@
+#!/bin/bash
+# sitepwgn - password generation for common password (websites, programs...)
+
+sitepass=$HOME/Others/Computer/testtest # filename of password
+
+# Check if pwgen is installed
+#hash pwgen 2>&- || { echo >&2 "* Fail: 'pwgen' is not installed."; exit 1; }
+
+# Check if password file already exists, prompt to overwrite
+if [ -f "$sitepass" ]; then
+  read -p " Previous password file exists ("$sitepass"), overwrite? (Y/n): " Yn
+  if [ "$Yn" != Y ]; then
+    exit
+  fi
+fi
+
+echo yeah
+#pwgen --capitalize --numerals --secure -1 > "$sitepass"
+exit
+
+# Ask before creating new pw file because old pw file will be erased.
+while true; do
+  read -p " Previous password file will be erased!  Create a new password as \""$sitepass"\" file? (Y/n): " Yn
+  case $Yn in
+    [Y]*  ) pwgen --capitalize --numerals --secure -1 > "$sitepass"; break;;
+    [Nn]* ) exit;;
+    *     ) echo "  Answer 'Y' for yes, 'n' for no."
+  esac
+done
+

@@ -1,0 +1,12 @@
+#!/bin/bash
+# Encrypt file
+
+filename="$@"
+
+# Display usage if no parameters given
+if [[ -z "$filename" ]]; then
+  echo " ${0##*/} <filename> - encrypts a file, outputs \"filename\".des3"
+  exit
+fi
+
+openssl des3 -salt -in "$@"" -out "$filename.des3"

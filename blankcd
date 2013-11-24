@@ -1,0 +1,5 @@
+#!/bin/bash
+# Quick blanking of a CD/DVD
+
+#cdrecord -v dev=/dev/dvd blank=fast
+wodim -vv dev=/dev/cdrw blank=all

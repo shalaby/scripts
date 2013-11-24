@@ -1,0 +1,37 @@
+#!/bin/bash
+# Copy to the clipboard the contents of a file
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+filename=$@
+
+# Display usage if no parameters given
+if [[ -z $filename ]]; then
+    echo " ${0##*/} <filename> - copy a file to the clipboard"
+    exit
+fi
+
+# Check that file exists
+if [[ ! -f $filename ]]; then
+  echo "$warn File ${txtund}$filename${txtrst} doesn't exist"
+  exit
+fi
+
+# Check user is not root (root doesn't have access to user xorg server)
+if [[ $(whoami) == root ]]; then
+  echo "$warn Must be regular user to copy a file to the clipboard"
+  exit
+fi
+
+# Copy file to clipboard, give feedback
+xclip -in -selection c < "$filename"
+echo "$pass ${txtund}"${filename##*/}"${txtrst} copied to clipboard"

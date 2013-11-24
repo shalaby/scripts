@@ -1,0 +1,33 @@
+#!/bin/bash
+# Backup configurations
+
+# Backup destination
+#bckp_dest="/home/todd/Desktop"
+bckp_dest="/run/media/todd/Backup/backup-configs"
+
+# Backup name
+comp="${HOSTNAME}"  # Computer name
+dist="arch"         # Distro
+type="configs"
+date="$(date "+%F")"
+bckp_file="$bckp_dest/$dist-$type-$date.tar.xz"
+
+# Include and exclude file locations
+scrpt_dir="/home/todd/.scripts/backup"
+incl_file="$scrp_dir"/${0##*/}-inc.txt
+excl_file="$scrp_dir"/${0##*/}-exc.txt
+
+# Check if backup directory exists
+if [ ! -d "$bckp_dest" ]; then
+  echo " Directory \""$bckp_dest"\" does not exist."
+  exit
+fi
+
+# Delete backups older than a month
+#if [[ -n "$(find "$bckp_dest" -mtime +30)" ]]; then
+#  find "$bckp_dest" -name "$distro-$type-*" -mtime +30 -exec rm {} \; && \
+#  echo " Deleted backups older than one month."
+#fi
+
+# Backup
+tar --exclude-from=$excl_file --files-from=$incl_file -c --xz -f $bckp_file

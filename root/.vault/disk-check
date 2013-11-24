@@ -1,0 +1,23 @@
+#!/bin/sh
+# Force disk check (requires reboot)
+
+# Home
+read -p " Force disk check of home partition?  (y/n): " check_home
+if [ "$check_home" = "y" ]; then
+  touch /home/forcefsck
+fi
+
+# System
+read -p " Force disk check of root partition?  (y/n): " check_root
+if [ "$check_root" = "y" ]; then
+  sudo touch /forcefsck
+fi
+
+# Reboot confirmation
+read -p " Reboot required for disk check, now? (y/n): " reboot
+if [ "$reboot" = "y" ]; then
+  sudo reboot
+  #dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+  #/freedesktop/Hal/devices/computer \
+  #org.freedesktop.Hal.Device.SystemPowerManagement.Reboot
+fi

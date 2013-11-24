@@ -1,0 +1,22 @@
+#!/bin/bash
+# Define span of multiple folders and join mp3s inside - useful for audio that
+# spans more than one CD
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <dir1> <dir2> <filename>.mp3 - folder span mp3 join"
+  exit
+fi
+
+# Create mp3 filelist
+declare -a filelist
+
+for (( i="$1"; i <= "$2"; i++ ))
+  do
+    suffix=$(printf '%03d' "$i")
+    f="Unknown Artist - Unknown Album $suffix"
+    filelist+=("$f"/*.mp3)
+  done
+
+# Concatenate mp3s
+cat "${filelist[@]}" | mp3cat - - > "$3".mp3

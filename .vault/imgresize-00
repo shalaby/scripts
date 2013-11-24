@@ -1,0 +1,30 @@
+#!/bin/bash
+# imgresize - resizes an image, if only width given resizes proportionally.
+# http://www.imagemagick.org/www/command-line-options.html
+
+size=$1
+shift
+file_nm="$@"
+resizedimagename="${imagename%.*}"-"$size".jpg
+
+# Usage if no argument is given
+if [[ -z $imagename ]]; then
+  echo "resizeimg <width> <image(s)> - rename image(s) and resize"
+  exit
+fi
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Resize and rename
+for i in $imagename; do
+  convert -resize "$size" -quality 95 "$imagename" "$resizedimagename"
+done

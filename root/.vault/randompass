@@ -1,0 +1,83 @@
+#!/bin/bash
+# Toggle between random and known passwords for users
+
+# User passwords to protect
+users=(root todd akau)
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        #
+pass=${bldblu}*${txtrst}
+warn=${bldred}*${txtrst}
+
+# Help
+case $1 in
+  h|-h|--help )
+    echo " ${0##*/} <*u> - toggle random and known passwords. ${txtbld}u${txtrst} - update passwords"
+    exit
+      ;;
+esac
+
+# Root user necessary
+if [ $(whoami) != root ]; then
+  echo "$warn Requires ${bldwht}root${txtrst} user to run."
+  exit
+fi
+
+# Check if users exist, if they don't remove from the users array
+list="${users[@]/%/|}"    # Puts array to list, add pipe after each user
+users=($(grep -Eo "^(${list// })\>" /etc/shadow)) # strip spaces, end of word
+
+#cnt=0
+#for i in ${users[@]}; do
+#  [ -z "$(grep "^$i" /etc/shadow)" ] && unset users[cnt] || ((cnt++))
+#done
+
+# Password generation
+passgen=$(< /dev/urandom tr -dc A-Za-z0-9/.$ | head -c20 | xargs | cat)
+
+# Variables for current passwords
+for user in ${users[@]}; do
+  eval "curpw$user=\$(grep \$user /etc/shadow | awk -F : '{print \$2}')"
+done
+
+# Save original passwords (first run)
+for save in ${users[@]}; do
+  if [ ! -f /root/pass$save ]; then
+    grep $save /etc/shadow | awk -F : '{ print $2 }' > /root/pass$save
+    echo "$pass Saved ${txtund}$save${txtrst} password"
+  fi
+done
+
+case $1 in
+  u ) echo "$warn Be sure no random passwords are set before updating passwords!"
+      echo -n "Update known passwords file(s)? "
+      read update
+      if [[ $update == [Yy] ]]; then
+        for known in ${users[@]}; do
+          grep $known /etc/shadow | awk -F : '{ print $2 }' > /root/pass$known
+          echo "$pass Updated ${txtund}$known${txtrst} password"
+        done
+        else
+        echo " Passwords not updated"
+        exit
+      fi
+      ;;
+  * ) if [[ "$curpwroot" == "$(cat /root/passroot)" ]] && [[ "$curpwtodd" == "$(cat /root/passtodd)" ]]; then
+        for u in ${users[@]}; do
+          usermod -p $passgen $u
+          echo "$pass Generated password for ${txtund}$u${txtrst}."
+        done
+        else
+        for u in ${users[@]}; do
+          usermod -p $(cat /root/pass$u) $u
+          echo "$pass Restored password for ${txtund}$u${txtrst}."
+        done
+      fi
+      ;;
+esac

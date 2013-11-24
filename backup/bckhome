@@ -1,0 +1,122 @@
+#!/bin/bash
+# Backup home directory
+
+comp="${HOSTNAME}" osys="linux"                    # destination dir name values
+type="home" date="$(date +%Y-%m)"                  # date YYYY-MM; %F YYYY-MM-DD
+
+src_dir="/"                                        # source dir - should be (/)
+dsp_dir="/mnt/Backup/rsync"                        # destination dir parent
+dst_dir="$dsp_dir"/"$comp"_"$osys"-"$type"_"$date" # destination dir
+
+incl_file="${0}"-inc.txt                           # include file name/location
+excl_file="${0}"-exc.txt                           # exclude file name/location
+
+editor=vim                                         # text editor
+
+# Program(s) required
+progs_req=(rsync vim)
+for p in ${progs_req[@]}; do hash "$p" 2>&- || \
+  { echo >&2 " Program required: "$p""; exit 1; }
+done
+
+# Check if root
+root_chk () {
+if [ $(whoami) != root ]; then
+  hash sudo 2>&- || { echo >&2 " Program required: sudo"; exit 1; }
+  sudo=sudo
+fi
+}
+
+# Test if source and destination-parent directories exist
+sdp_dir_chk () {
+if [ -d "$src_dir" ]; then echo " Source dir exists: "$src_dir""
+else                       echo " Source dir non-exist: "$src_dir"" && exit; fi
+if [ -d "$dsp_dir" ]; then echo " Dstpar dir exists: "$dsp_dir""
+else                       echo " Dstpar dir non-exist: "$dsp_dir"" && exit; fi
+}
+
+# Test if destination directory exists, else create
+dst_dir_chk () {
+if [ -d "$dst_dir" ]; then
+  echo " Dstntn dir exists: "$dst_dir""
+else
+  mkdir "$dst_dir" && \
+  echo " Created destination directory \""$dst_dir"\""
+fi
+}
+
+# Check if files exists in include file in source directory
+src_inc_chk() {
+[ ! -f "$incl_file" ] && { echo " No include file, exiting." && exit; }
+while read iname; do
+  [ -e "$iname" ] || echo " Include non-exist: "$iname""
+done < "$incl_file"
+}
+
+# Check if files exists in exclude file in source directory
+src_exc_chk() {
+[ ! -f "$excl_file" ] && { echo " No exclude file, exiting." && exit; }
+while read ename; do
+  [ -e "$ename" ] || echo " Exclude non-exist: "$ename""
+done < "$excl_file"
+}
+
+# Backup (prompt before)
+backup () {
+while true; do
+  read -p " Execute backup (y/n): " yn
+  case $yn in
+    [Yy]* ) $sudo rsync -axSvr --del --delete-excluded \
+            --files-from="$incl_file" \
+            --exclude-from="$excl_file" "$src_dir" "$dst_dir"
+            break ;;
+    [Nn]* ) break ;;
+    *     ) echo "  Answer 'y' for yes, 'n' for no."
+  esac
+done
+}
+
+scrpt_help () {
+echo " ${0##*/} <i|e||ie|ee|x> - backup home directory
+  i - include a file/folder/link (add to the include list)
+  e - exclude a file/folder/link (add to the exclude list)
+  I - include list edit
+  E - exclude list edit
+  x - execute backup"
+}
+
+case $1 in
+  i ) # Add to include list
+      shift
+      for f in "$@"; do
+        [ ! -e "$f" ] && echo "File non-exist: "$f"" && continue # Check exist.
+        full_path=$(realpath -s "$f")
+        [ -d "$f" ] && full_path="$full_path/"          # Trailing slash req dir
+        echo "$full_path" >> "$incl_file"
+        echo " Added to inc-file: "$f""
+      done
+      sort -u "$incl_file" -o "$incl_file" ;;           # Sort, erase duplicates
+  e ) # Add to exclude list
+      shift
+      for f in "$@"; do
+        [ ! -e "$f" ] && echo "File non-exist: "$f"" && continue # Check exist.
+        full_path=$(realpath -s "$f")
+        [ -d "$f" ] && full_path="$full_path/"          # Trailing slash req dir
+        echo "$full_path" >> "$excl_file"
+        echo " Added to inc-file: "$f""
+      done
+      sort -u "$excl_file" -o "$excl_file" ;;           # Sort, erase duplicates
+  I ) # Edit include file
+       $editor "$incl_file" ;;
+  E ) # Edit exclude file
+       $editor "$excl_file" ;;
+  x ) # Execute backup
+      root_chk
+      sdp_dir_chk
+      dst_dir_chk
+      src_inc_chk
+      src_exc_chk
+      backup ;;
+  * ) # Display usage if no parameters give
+      scrpt_help ;;
+esac

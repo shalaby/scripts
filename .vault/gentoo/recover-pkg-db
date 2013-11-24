@@ -1,0 +1,115 @@
+#!/bin/bash
+# hielvc 11-11-06 as usual use at ye own risk. It works for me but not
+# always for the right reason, right heavyjoost ;^)
+# An attempt at a /var/db/pkg recovwery tool useing /var/log/emerge.log
+# with the portage-2.1.2 appears not to be needed but you can use to see
+# pkg's built since date.
+# 11-15 set date_regx to default date april 1 2002
+# 1-12-07 Added an unmerge filter, it helps to pick unmerged packages out
+# and keep sloted versions
+# 9-29-07 added the date exclusion to unmerge list
+# 10-1-07 changed unmerge and fix script to actually out put to /var/db/pkg .
+
+# empty pkg_atom.lst & tmp
+    :>pkg_atom.lst ; :>cat_pkg.lst ; :>tmp
+date_regx="" ; day="" ; pkg=""
+
+usage(){
+   cat<<-END
+   
+   USAGE: rcv_pkg_db.sh [options] (optonal date=> Jul 7 2006)
+      Run with "-p" for pretend. Output goes to screen.
+      Use "-d" to do the deed, write to /var/db/pkg/ . If
+      you did a world --emptytree recently then look through
+      your emerge.log and find the date. Enter the date as
+      Aug 13 2006. The script will then only use files from
+      that date on.
+   Opitons
+      -p for pretend. Outputs to screen
+      -d to populate /var/db/pkg/
+END
+   echo
+   exit
+}
+
+# Added a usage, pretend and "really do the deed"
+if [ "$1" == "" ];then
+   usage
+elif [ "$1" == "-p" ]; then
+   test="p"
+elif [ "$1" == "-d" ]; then
+   test="d"
+else
+   usage
+fi
+
+# Added date fetching
+# Check # of agrcs if 2 then epoch time ?
+if [ $# -eq 1 ];then
+   date_regx="1017648000"  # april 1 2002
+elif [ $# -eq 2 ];then
+   date_regx="$1"
+else
+   shift
+   day="$@"
+   date_regx="$(date -d "$day" +%s)"  #convert to epoch time
+fi
+
+# the below gets a list of all pkgs merged and the time stamp >= date_regx
+# sample  "1162267626 x11-misc/xscreensaver-5.01-r1"
+awk '/completed/ && !/Sync/ {print $1, $8}' /var/log/emerge.log|sed 's/://'| \
+awk '$1 >= '"$date_regx"' {print $1, $2}'>emerge.lst
+
+# To get list of unmerged pkgs.9-29 added date regex
+awk '/unmerge/ && !/Nothing/ {print $5}' /var/log/emerge.log|sed 's/://'| \
+awk '$1 >= '"$date_regx"' {print $1}'>unmerge.lst
+
+# now remove the unmerged
+for i in $(< unmerge.lst);do
+   grep -v "$i" emerge.lst>tmp ; mv tmp emerge.lst
+done
+
+# Now get cat/pkg from list,and remove timestamp
+# Chaned to keep version as it makes a more precise match.
+#awk -F / '{print $2}' emerge.lst |sed 's/-[0-9].*//'|sort -u >pkg_atom.lst
+awk -F / '{print $2}' emerge.lst | sort -u >pkg_atom.lst
+
+# Now get "timestamp cat/pkg-version" and compare timestamps
+# use cat/pkg to get all the timestamp's and get the latest version,
+# useing the timestamp. It should be the one currently in use.
+for pkg in $(< pkg_atom.lst); do
+   TS_empty="yes" ; T_newest="0" ; ALL_TS=""
+    # timestamp for matching pkg's
+   ALL_TS=$(awk '/'"$pkg"'/ {print $1}' emerge.lst)
+    # Now sort by newest,largest,timestamp
+   for T in $(echo $ALL_TS);do
+    # Checking timestamp age
+      if [ "$T_empty" == "yes" ]; then
+         T_newest=$T ; T_empty="no"
+      elif [ "$T" -gt "$T_newest" ]; then
+         T_newest=$T
+      fi
+   done
+
+# Now find the newest merged cat/pkg useing the timestamp and
+# put the matching cat/pkg-ver in cat_pkg.lst
+   awk '$1 ~ /'"$T_newest"'/ {print $2}' emerge.lst>>cat_pkg.lst
+done
+
+# Added -u to cut out double entries
+cat_pkg=$(sort -u cat_pkg.lst)
+if [ "$test" == "p" ]; then
+   echo "$cat_pkg"
+elif [ "$test" == "d" ]; then
+   # Now make /var/db/pkg/$cat/pkg. Expanded $cat_pkg in a loop 10-1.
+   for cp in ${cat_pkg} ; do
+      mkdir -p /var/db/pkg/$cp
+   done
+else echo "$pkg"
+   echo " And ow de ell id gya get ere"
+fi
+
+#clean up
+rm cat_pkg.lst pkg_atom.lst emerge.lst unmerge.lst
+
+echo "You should 'emerge world -e' after running the script to fully fill out /var/db/pkg/cat/pkg-version/files."

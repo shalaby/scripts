@@ -1,0 +1,65 @@
+#!/bin/bash
+# snort with inline-mode daemon
+# http://openmaniak.com/inline_final.php
+
+start(){
+# Start daemons.
+echo " Starting ip_queue module:"
+lsmod | grep ip_queue >/dev/null || /sbin/modprobe ip_queue;
+echo " Starting iptables rules:"
+# iptables traffic sent to the QUEUE:
+# accept internal localhost connections
+iptables -A INPUT -i lo -s 127.0.0.1 -d 127.0.0.1 -j ACCEPT
+iptables -A OUTPUT -o lo -s 127.0.0.1 -d 127.0.0.1 -j ACCEPT
+#Allowing all outgoing connections
+#iptables -A OUTPUT -m state --state NEW -j QUEUE
+# send all the incoming, outgoing and forwarding traffic to the QUEUE
+iptables -A INPUT -j QUEUE
+#iptables -A FORWARD -j QUEUE
+#iptables -A OUTPUT -j QUEUE
+# Start Snort inline-mode
+echo " Starting snort inline-mode:"
+/usr/bin/snort -c /etc/snort/snort.conf -Q -D && \
+barnyard -c /etc/snort/barnyard.conf -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map -d /var/log/snort -f snort.log -w /var/log/snort/barnyard.waldo -D
+ps aux | grep -v grep | grep "snort -c"
+ps aux | grep -v grep | grep "barnyard"
+# -Q -> process the queued traffic
+# -D -> run as a daemon
+# -v -> verbose - seen it used alot with -Q but uses alot of resources
+# -l -> log path - doesn't look like it needs to be specified
+# -c -> config path
+# Snort cannot set uid or gid in inline mode - -u snort -g snort
+}
+
+stop() {
+# Stop daemons.
+# Stop Snort_Inline
+echo " Shutting down snort_inline: "
+killall snort
+killall barnyard
+# killproc snort
+# rm -f /var/run/snort/lock???
+# Remove all the iptables rules and
+# set the default Netfilter policies to accept
+echo "Not Removing iptables rules:"
+#iptables -F
+# -F -> flush iptables
+#iptables -P INPUT ACCEPT
+#iptables -P OUTPUT ACCEPT
+#iptables -P FORWARD ACCEPT
+# -P -> default policy
+}
+
+restart(){
+stop
+start
+}
+
+case "$1" in
+  start )   start   ;;
+  stop )    stop    ;;
+  restart ) restart ;;
+  * )
+  echo $"Usage: $0 {start|stop|restart|}"
+  exit 1
+esac

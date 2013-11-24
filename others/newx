@@ -1,0 +1,6 @@
+#!/bin/bash
+# Open program in new display
+
+DISPLAY=:1.0
+
+xinit $* -- :1

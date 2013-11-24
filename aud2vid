@@ -1,0 +1,35 @@
+#!/bin/bash
+# Convert audio file to video
+
+# Program test
+if ! hash ffmpeg 2>&- ; then
+  echo " Program required: ffmpeg"; exit 1; fi
+
+# Display usage if incorrent number of parameters given
+if [ $# != 3 ] ; then
+	echo "  ${0##*/} <image_file> <audio_file> <video.avi>"
+	exit 1; fi
+
+# Test if files exist
+if [ ! -f "$1" ] ; then
+	echo " Image file doesn't exist: "$1""
+	exit 1; fi
+if [ ! -f "$2" ] ; then
+	echo " Audio file doesn't exist: "$2""
+	exit 1; fi
+while [ -f "$3" ]; do
+  read -p " Video file already exists, overwrite (y/n): " yn
+  case $yn in
+    [Yy] )  break 2 ;;
+    [Nn] )  exit 0  ;;
+    [*]  )  true
+  esac
+done
+
+dur=$(ffprobe -show_entries format=duration -v quiet "$2"|grep -o [0-9].*)
+ffmpeg -loop 1 -f image2 -i "$1" -vcodec huffyuv -t $dur -y video.avi
+
+#ffmpeg -loop 1 -f image2 -i "$1" -i "$2" -acodec copy -t $dur -y "$3"
+#mencoder \"mf://*.png\" -mf fps=1.1.6666667 -ovc x264 -o "$3"
+#ffmpeg -i "$1" -i "$2" -vcodec libx264 -level 41 -crf 24 -acodec aac -ab 128k -ac 2 -ar 48000 -t $dur -strict -2 -y "$3" # doesn't work on all players
+#for a in 01\ Part1.mp3 02\ Part2.mp3 03\ Part3.mp3; do aud2vid ~/Designs/Vault/aud2vid.png "$a" ~/Videos/Other/King_FDNS_${a%% *}.mp4; done

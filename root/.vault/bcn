@@ -1,0 +1,36 @@
+#!/bin/bash
+# Add notes to file (about backing up configurations)
+
+# Label computer, distro, type and date
+pc=$HOSTNAME
+distro=arch
+type=configs
+date=`date "+%F"`-`date "+%r"`
+
+# Where to backup
+backlsdir="/home/todd/.bin/root/backup"
+bcnfile=$backlsdir/"bcknotes.txt"
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <notes to add> - Add notes for backups."
+  exit
+fi
+
+# Check if folder exists
+if [ ! -d $backlsdir ]; then
+  echo "Directory and note file do not exist:"
+  echo "$bcnfile... Exiting"
+  exit
+fi
+
+# Check if file exists
+if [ ! -f $bcnfile ]; then
+  echo "Note file does not exists:"
+  echo "$bcnfile... Exiting"
+  exit
+fi
+
+# Append note
+echo "$date: "$@"" >> $bcnfile
+echo "Note added"

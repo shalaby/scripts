@@ -1,0 +1,41 @@
+#!/bin/bash
+# Create KDM and Ksplash themes based on current theme
+
+user=todd
+userdir=/home/$user
+
+kdmgendir="$userdir/.kde4/share/apps/kdm/themes/MyKdmTheme/"
+kdmrootdir="/usr/share/apps/kdm/themes/"
+
+# Text color variables
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+warn=${bldred}!${txtrst}
+
+
+# Must be root
+if [ $(whoami) != root ]; then
+  echo "$warn Need to be root"
+  exit
+fi
+
+echo "$info Generating KDM Theme"
+su $user -c "KdmThemeGenerator"
+
+echo "$info Generating Ksplash Theme"
+su $user -c "KsplashThemeGenerator"
+
+echo "$info Copying KDM theme to root filesystem"
+#set -x
+[ -d $kdmrootdir/MyKdmTheme ] && rm -r $kdmrootdir/MyKdmTheme/
+mv $kdmgendir $kdmrootdir
+
+echo
+echo "$info KDM theme (as regular user):"
+echo "kdesu systemsettings"
+echo "$info Advanced tab > Login Manager > Theme tab"
+echo "$info Ksplash:"
+echo "$info System Settings > Appearance > Splash Screen"

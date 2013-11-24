@@ -1,0 +1,13 @@
+# Copies and renames subdirectory mp3s to current directory
+
+n=1
+for f in */*.mp3; do
+  case $n in
+  ?) nn=00$n ;; ## adjusts number of zeroes as required
+  ??) nn=0$n ;;
+  ???) nn=$n ;;
+  esac
+  cp "$f" "$nn.mp3"
+  n=$(( $n + 1 ))
+done
+

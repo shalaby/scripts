@@ -1,0 +1,62 @@
+#!/bin/bash
+# plasmabac - backup and restore local plasma config
+
+backdir=/opt/backup
+backname=arch-configs-plasma
+userdir=/home/todd
+
+# Use filename as program name
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} b|r - backup or restore plasma configurations"
+  exit
+fi
+
+# Check if the directory exists and user has access to it
+if [[ -n $(ls "$backdir" 2>&1 | grep denied) ]]; then
+  echo "$warn User doesn't have access to the backup directory:"
+  echo "  ${txtund}$backdir${txtrst}"
+  exit
+  else
+  if [[ ! -d "$backdir" ]]; then
+    mkdir -p "$backdir"
+    echo "${bldblu}*${txtrst} KDE 4 plasma config backup directory doesn't exist.  Created."
+  fi
+fi
+
+plasmarcs=($(find "$userdir"/.kde4/share/config -type f -name "plasma*"))
+bkpplasmarcs=($(find "$backdir" -type f -name "*plasma*" | sort))
+date=$(date +%F)
+
+# Delete backups older than two months
+if [[ -n "$(find "$backdir" -name "*plasma*" -mtime +60)" ]]; then
+  find "$backdir" -mtime +60 -exec rm {} \;
+  echo "$pass Configurations older than two months deleted"
+fi
+
+case $1 in
+  b | backup )  tar -czpf "$backdir"/"$backname"-"$date".tar.gz ${plasmarcs[@]} 2&> /dev/null
+                echo "$pass Plasma configurations backed up. (${bldwht}$date${txtrst})"
+                ;;
+  r | restore ) for((i=0;i<${#bkpplasmarcs[@]};i++)) ; do
+                  echo " ${txtbld}${i}) ${bkpplasmarcs[$i]##*/}${txtrst}"
+                done
+                echo -n "Choose the plasma configuration to restore: "
+                read restore
+                selection="${bkpplasmarcs[$restore]}"
+                tar -xf "$selection" -C /
+                echo "$pass Restored plasma configs: ${txtbld}${bkpplasmarcs[$restore]##*/}${txtrst}"
+                ;;
+esac

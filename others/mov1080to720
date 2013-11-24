@@ -1,0 +1,33 @@
+#!/bin/bash
+# Scale 1080 video to 720
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <original> <rescaled>.mov - downscale 1080 .mov (mp4) to 720"
+  exit
+fi
+
+# One pass (decent quality)
+#ffmpeg -i "$1" -s 1280x720 -acodec copy -sameq -sws_flags lanczos -f mpegts -vcodec libx264 -threads 0 "$2".mov
+ffmpeg -i "$1" -acodec copy -vcodec libx264 -vpre hq -crf 18 -s hd720 -sws_flags lanczos -threads 0 "$2".mp4
+# vpre - http://www.doyourself.org/ffmpeg/588-ffmpeg-x264-encoding-guide/
+# vpre - http://juliensimon.blogspot.com/2009/01/howto-ffmpeg-x264-presets.html
+# vpre hq - not good quality, looks like I'll have to set bitrate or crf?
+#   -sameq may be problem (uses same quantiser as source)
+#   - "You should only use it when the inputs and outputs are using the same quantizer scale..."
+# -crf 25 used to set bitrate and size (good, fast results for one pass),
+# smaller value=higher quality/bitrate ... 18 roughly considered lossless
+# or two pass VBR
+# threads 0 - means encoder will decide how many threads to use
+# http://ffmpeg-users.933282.n4.nabble.com/Best-H-264-encoding-settings-for-source-quality-preservation-td1475995.html
+# -b 200k default (think this is low)
+# http://rodrigopolo.com/ffmpeg/cheats.html
+
+# Two pass (better quality)
+#ffmpeg -i "$1" -an -pass 1 -vcodec libx264 -vpre fastfirstpass -b 2772k -bt 2772k -s hd720 -sws_flags lanczos "$2"
+
+#ffmpeg -i "$1" -pass 2 -vcodec libx264 -vpre hq -b 2772k -bt 2772k -map 0.0:0.0 -map 0.3:0.1 -map 0.2:0.2 -acodec copy -scodec copy -s hd720 -sws_flags lanczos -y -f avi -threads 0 "$2"
+
+#ffmpeg -i "$1" -b 3000k -vcodec h264 -ab 256k -ar 44100 -acodec mpeg4aac -coder 1 -flags +loop -cmp +chroma -partitions +parti4x4+partp8x8+partb8x8 -me hex -subq 5 -me_range 16 -g 250 -keyint_min 25 -sc_threshold 40 -i_qfactor 0.71 "$2".mov
+
+#mencoder thundersoul-clip1_h1080p.mov -ovc x264 -x264encopts crf=20:subq=7:8x8dct:trellis=2:threads=0:frameref=9:bframes=7:weightb -oac lavc -lavcopts acodec=aac:abitrate=384 -vf dsize=1280:-3,scale=1280:-3 -o "thundersoul-clip1_h720.mov"

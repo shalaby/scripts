@@ -1,0 +1,9 @@
+#!/bin/bash
+# Basic parser of system logs for errors
+
+#export LC_TIME="POSIX"
+egrep -ri "$(date '+%b %e')"'.*(missing|error|fail|(no |not |in)valid|fatal|corrupt|warning|wrong|illegal| fault|caused)' /var/log/*  | sort -u
+echo ''
+echo '/var/log/Xorg.0.log:'
+echo ''
+egrep -i '(missing|error|fail|(no |not |in)valid|fatal|corrupt|warning|wrong|illegal| fault|caused|\(EE\)|\(WW\))' /var/log/Xorg.0.log  | sort -u

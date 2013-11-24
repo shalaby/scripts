@@ -1,0 +1,12 @@
+#!/bin/bash
+
+user=akau
+test=$(ls -l /home/$user/.config | grep chromium | grep root)
+
+if [ -z "$test" ]; then
+  chown -R root:root /home/$user/.config/chromium
+  echo " Protecting chrome configs"
+  else
+  chown -R akau:users /home/$user/.config/chromium
+  echo " Unprotecting chrome configs for $user"
+fi

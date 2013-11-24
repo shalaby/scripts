@@ -1,0 +1,3 @@
+#!/bin/sh
+
+curl --silent http://feeds.feedburner.com/ICanHasCheezburger | sed -e '\%^<img.*http://icanhascheezburger.files.wordpress.com.*jpg%!d' > $HOME/Desktop/icanhas.html

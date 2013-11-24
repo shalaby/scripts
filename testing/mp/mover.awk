@@ -1,0 +1,30 @@
+/files=\(/ {
+    for (v in saved) { print saved[v] }; delete saved
+    ++n
+}
+
+/check=\(/ {
+    ++processing_files
+}
+
+{
+    if (n == 0) {
+        print $0
+    } else {
+        saved[n++] = $0
+        #(
+        if (n > 0 && index($0, ")")) {
+            limit = n
+            n = 0
+        }
+    }
+    #(
+    if (processing_files > 0 && index($0, ")")) {
+        processing_files = 0
+        for (v in saved) {
+          print saved[v]
+        }
+        delete saved
+    }
+}
+END { for (v in saved) { print saved[v] }; delete saved }

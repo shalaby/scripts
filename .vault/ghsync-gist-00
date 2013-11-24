@@ -1,0 +1,186 @@
+#!/bin/bash
+# Create a github gist repository for sharing scripts/configs on blog
+
+# Base directory, repository parent directory
+base_dir=""$HOME"/"
+repo_par=""$HOME"/.github-gist/"
+
+# File list (File list order must match repository order)
+files=('/home/todd/.scripts/others/ghsync-script'
+       '/home/todd/.scripts/vault/unity-effects'
+       '/home/todd/.scripts/pwr'
+       '/home/todd/.bashrc'
+       '/home/todd/.scripts/ripcd'
+       '/home/todd/.scripts/normalize-audio'
+       '/home/todd/.scripts/template'
+       '/home/todd/.scripts/template-basic'
+       '/home/todd/.scripts/others/vim2html'
+       '/home/todd/.scripts/bugfixes/externalmonitor'
+       '/home/todd/.config/autostart/externalmonitor.desktop'
+       '/etc/pm/sleep.d/90_externalmonitor'
+       '/home/todd/.scripts/sitepass-ls'
+       '/home/todd/.scripts/sitepass-gn'
+       '/home/todd/.scripts/sitepass-cb'
+       '/home/todd/.scripts/bugfixes/touchpad-button-fix'
+       '/home/todd/.scripts/rm'
+       '/home/todd/.scripts/others/mp3cat-mdir'
+       '/home/todd/.scripts/others/g9led-random-color'
+       '/home/todd/.config/autostart/g9led-random-color.desktop'
+       '/etc/pm/sleep.d/95_g9led-random-color'
+       '/home/todd/.scripts/calc'
+       '/home/todd/.scripts/others/atget'
+       '/home/todd/.scripts/rps'
+       '/home/todd/.scripts/others/cmtstrip'
+       '/home/todd/.scripts/others/grok'
+       '/home/todd/.scripts/unpack'
+       '/home/todd/.scripts/pack'
+       '/home/todd/.scripts/others/ff-restore'
+       '/home/todd/.scripts/root/purge-memory'
+       '/home/todd/.scripts/bgcmd'
+       '/home/todd/.scripts/cb-in'
+       '/home/todd/.scripts/cb-out'
+       '/home/todd/.scripts/others/ghsync-gist'
+       '/home/todd/.scripts/root/arch/mp'
+       '/home/todd/.scripts/root/arch/pacpull'
+       '/home/todd/.Arachnophilia/ArachConf/Arach.ini'
+       '/home/todd/.Arachnophilia/Macros/Macros.xml'
+       '/home/todd/.scripts/others/md2wp'
+       '/home/todd/.scripts/pspvidconv'
+       '/home/todd/.scripts/others/devtop'
+       '/home/todd/.scripts/others/memtop'
+       '/home/todd/.local/share/applications/cvlc.desktop'
+       '/home/todd/.scripts/screencast'
+       '/home/todd/.scripts/root/backup/bcksysc'
+       '/home/todd/.q3a/q3ut4/autoexec.cfg'
+       '/home/todd/.scripts/gpuswitch')
+
+# Repositories (repo_address)
+repos=('git@gist.github.com:2839879.git'
+       'git@gist.github.com:2840553.git'
+       'git@gist.github.com:2843630.git'
+       'git@gist.github.com:2844190.git'
+       'git@gist.github.com:2844265.git'
+       'git@gist.github.com:2844272.git'
+       'git@gist.github.com:2844305.git'
+       'git@gist.github.com:2844306.git'
+       'git@gist.github.com:2844801.git'
+       'git@gist.github.com:2844866.git'
+       'git@gist.github.com:2844966.git'
+       'git@gist.github.com:3066195.git'
+       'git@gist.github.com:2844933.git'
+       'git@gist.github.com:2844934.git'
+       'git@gist.github.com:2844935.git'
+       'git@gist.github.com:2844992.git'
+       'git@gist.github.com:2845277.git'
+       'git@gist.github.com:2848140.git'
+       'git@gist.github.com:2848180.git'
+       'git@gist.github.com:2848197.git'
+       'git@gist.github.com:2848198.git'
+       'git@gist.github.com:2851690.git'
+       'git@gist.github.com:2851829.git'
+       'git@gist.github.com:2853010.git'
+       'git@gist.github.com:2853011.git'
+       'git@gist.github.com:2858162.git'
+       'git@gist.github.com:2861045.git'
+       'git@gist.github.com:2861046.git'
+       'git@gist.github.com:2867295.git'
+       'git@gist.github.com:2884577.git'
+       'git@gist.github.com:2886277.git'
+       'git@gist.github.com:2888206.git'
+       'git@gist.github.com:2888207.git'
+       'git@gist.github.com:2888412.git'
+       'git@gist.github.com:2974884.git'
+       'git@gist.github.com:3019486.git'
+       'git@gist.github.com:3050300.git'
+       'git@gist.github.com:3050307.git'
+       'git@gist.github.com:3079785.git'
+       'git@gist.github.com:3123937.git'
+       'git@gist.github.com:3242049.git'
+       'git@gist.github.com:3242078.git'
+       'git@gist.github.com:3398845.git'
+       'git@gist.github.com:3441383.git'
+       'git@gist.github.com:3558352.git'
+       'git@gist.github.com:3628294.git'
+       'git@gist.github.com:3706273.git')
+
+# Program(s) required
+progs_req=(jist)
+for p in ${progs_req[@]}; do
+hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+addfilechk () {
+  for file in "$@"; do
+    [ ! -f "$file" ] && echo " "$file" doesn't exist" && exit
+  done
+}
+
+extfilechk () {
+  for file in "${files[@]}"; do
+    [ ! -f "$file" ] && echo " "$file" doesn't exist" && exit
+  done
+}
+
+help ()
+{
+echo " ${0##*/} <option> <*file> - Add or update gist repo(s)
+  a - Add gist repo for file(s)
+  u - Update all gist repos for all files"
+}
+
+# Options
+case $1 in
+ a )  # Upload new files to github gist
+      shift
+      addfilechk
+      for file in "$@"; do
+        if [ -z "${file##*.}" ]; then
+          # Upload file (cut second line to use as description); print output
+          url_address="$(jist -p -d "$(sed -n '2p' "$file" | sed 's/^# //')" -f "$file".sh "$file")"
+        else
+          url_address="$(jist -p -d "$(sed -n '2p' "$file" | sed 's/^# //')" "$file")"
+        fi
+        echo " ---"
+        echo " filenm path: "$(readlink -f "$file")""
+        echo " git address: $(echo "$url_address" | sed -e 's|https://|git@|' -e 's|.com/\(.*\)|.com:\1.git|')"
+        echo " url address: "$url_address""
+      done
+      echo " ---"
+      echo " Enter filemame path and gist number in script to enable updating them."
+      echo " ---" ;;
+ u ) # Create parent directory for local repos; rm prev. b4 cp'ing new files
+      cd
+      extfilechk
+      [ -d "$repo_par" ] && rm -rf "$repo_par"
+      mkdir -p "$repo_par"
+      # Create local repository directories, cp files
+      for file in "${files[@]}"; do
+        # Create parent directory for files
+        cd "$repo_par" || exit
+        # Create local repo dir. per file (each gist will needs its own repo)
+        repo_dir="$(basename "$file")"
+        [ ! -d "$repo_dir" ] && mkdir "$repo_dir"
+        cd "$repo_dir"
+        # Copy file
+        cp -a "$file" .
+      done
+      # Update gist files
+      n=${#files[@]} # number of elements in array (needed to sync two arrays)
+      for (( i=0; i<n; i++ )); do
+        cd "$repo_par" || exit
+        repo_dir="$(basename "${files[$i]}")"
+        cd "$repo_dir"
+        # Initialize local repository; define remote repo; add file to git
+        git init
+        repo_name="${repo_dir#.*}" # repos names cannot start with a .
+        git remote add "$repo_name" "${repos[$i]}"
+        git add . 2> /dev/null
+        # Record changes to all files, rm those not in index, add commit msg
+        git commit -a -m "Weekly update" || exit
+        # Sync local repository to github gist repository
+        git push --force "$repo_name" master && \
+        echo " Synced local repository ""${repos[$i]}"" to gist repository"
+      done    ;;
+    * ) help  ;;
+esac

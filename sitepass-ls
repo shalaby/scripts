@@ -1,0 +1,42 @@
+#!/bin/bash
+# Edit list of websites, programs... using common password
+
+stpw_dir=$HOME                                  # dir containing password files
+sitelist="$stpw_dir"/.sitepass-ls.txt           # filename of list
+editor=vim                                      # text editor preference
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <option> <*add entry> - list of programs/sites using common pw
+  a | add   - add entry to list
+  e | edit  - edit list
+  s | sort  - sort list alphabetically
+  u | uncom - uncomment list for new password"
+  exit
+fi
+
+case $1 in
+  # Add entry, sort, remove blank lines from list
+  a | add  )  shift
+              echo "$@" >> "$sitelist" && echo " Added website to list"
+              sort -uV "$sitelist" -o "$sitelist"
+              sed -i '/^$/d' "$sitelist"
+              ;;
+  # Edit list
+  e | edit )  $editor "$sitelist" +"set syn=sh"
+              ;;
+  # Sort, remove blank lines from list
+  s | sort )  sort -uV "$sitelist" -o "$sitelist"
+              sed -i '/^$/d' "$sitelist"
+              echo " Sorted list."
+              ;;
+  # Uncomment lines from list
+  u | uncom ) read -p " Uncomment pass/login websites file? (y/n): " uncomment
+              if [ "$uncomment" = "y" ]; then
+                sed -i 's/^#\([a-z,A-Z]\)/\1/g' "$sitelist"
+              fi
+              ;;
+  # Unknown option help
+  *         ) echo " Unknown option"
+              ;;
+esac

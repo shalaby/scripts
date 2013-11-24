@@ -1,0 +1,49 @@
+#!/bin/bash
+# Upload files to ompldr.org
+
+# TODO: Add 'slow down, cowboy' sleeps
+
+URL='http://ompldr.org'
+Q='-#'; U=0; F="OmPlOrD"
+
+while getopts 'quf:h' opt ; do
+  case $opt in
+    q) Q='-s' ;;
+    u) Q='-s'; U=1 ;;
+    f) F="$OPTARG" ;;
+    h) echo '-q for quiet; -u for url_only; -f for stdin.name'; exit 0 ;;
+  esac
+done
+shift $(( OPTIND -1 ))
+
+ompldr() {
+  local file=$1 name=$2 furl
+  furl=$(curl $Q -F "file1=@${file};filename=${name}" "${URL}/upload" |
+    grep '<!-- View file:' | grep -o 'https\?://[^<]\+')
+  if (( U )); then
+    echo "${furl}"
+  else
+    echo "${furl} : ${file}"
+  fi
+}
+
+got_stdin=0
+
+# Stdin is not a terminal- e.g. pipe in
+if [[ ! -t 0 ]]; then
+  ompldr - "$F"
+  got_stdin=1
+fi
+
+for file; do
+  # if - is given, cURL will attempt to read stdin
+  if [[ $file == '-' ]]; then
+    (( got_stdin )) && continue  # read stdin only once
+    echo "reading from terminal input..." >&2
+    ompldr - "$F"
+    (( ++got_stdin ))
+  else
+    name=${file##*/}
+    ompldr "$file" "$name"
+  fi
+done

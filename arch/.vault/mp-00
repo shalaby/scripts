@@ -1,0 +1,123 @@
+#!/bin/bash
+# mp - makepkg package building tasks
+
+# Activate debugging
+#set -x
+
+# Get local version and AUR version
+#aur_version() {
+#  wget -q -O- "http://aur.archlinux.org/rpc.php?type=info&arg=${1}" | sed 's/.*"Version":"\([^"]*\)".*/\1/')
+#}
+#local_version() {
+#  pacman -Q ${1} | cut -d\  -f2
+#}
+
+
+# Text color variables
+txtbld=$(tput bold)       # bold
+txtund=$(tput sgr 0 1)    # underline
+bldblu='\e[1;34m'         # blue
+bldred='\e[1;31m'         # red
+bldwht='\e[1;37m'         # white
+txtrst='\e[0m'            # text reset
+info=${bldwht}*${txtrst}
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Add md5sums following source array in PKGBUILD
+md5add () {
+
+  # Delete previous md5sum entries
+  sed -i "/^.*'[a-z0-9]\{32\}'.*$/d" PKGBUILD
+  sed -i "/^md5sums/,/$/d" PKGBUILD
+
+  # Save then delete the build section
+  sed -e '/^build().*$/,$!d' PKGBUILD > /tmp/PKGBUILD.tmp
+  sed -i '/^build().*$/,$d' PKGBUILD
+
+  # Remove trailing blank lines so md5sums line follows last line
+  while [ "$(tail -n 1 PKGBUILD)" == "" ]; do
+    sed -i '$d' PKGBUILD
+  done
+
+  # Add md5sums
+  makepkg -g >> PKGBUILD
+
+  # Add two blank lines to seperate variable and build section
+  echo -e "\n" >> PKGBUILD
+
+  # Re-append build section
+  cat /tmp/PKGBUILD.tmp >> PKGBUILD
+
+  # Remove trailing blank lines to clean up
+  while [ "$(tail -n 1 PKGBUILD)" == "" ]; do
+    sed -i '$d' PKGBUILD
+  done
+
+}
+
+# Options
+case $1 in
+  p ) if [ ! -f ./PKGBUILD ]; then
+        echo -e "$warn No PKGBUILD in directory. (${txtund}$(pwd)${txtrst})"
+        exit; else
+        makepkg -sf
+        # Move package to cache
+        pkgname=$(grep "^pkgname" PKGBUILD | awk -F = '{ printf $2 }')
+        pkgver=$(grep "^pkgver" PKGBUILD | awk -F = '{ printf $2 }')
+        pkgrel=$(grep "^pkgrel" PKGBUILD | awk -F = '{ printf $2 }')
+        pkgarchive=$pkgname-$pkgver-$pkgrel-$(arch).pkg.tar.gz
+        pkglocdir="/var/cache/pacman/pkg-local/"
+        if [ -f $pkgarchive ]; then
+          cp $pkgarchive $pkglocdir
+          echo -e "$pass Copying built package to cache"
+        fi
+      fi
+      ;;
+  r ) if [ ! -f ./PKGBUILD ]; then
+        echo -e "$warn No PKGBUILD in directory. (${txtund}$(pwd)${txtrst})"
+        exit; else
+        if [ -d src ]; then rm -rf src/; fi
+        makepkg -sf
+      fi
+      ;;
+  s ) if [ ! -f ./PKGBUILD ]; then
+        echo -e "$warn No PKGBUILD in directory. (${txtund}$(pwd)${txtrst})"
+        exit 1; else
+        echo "adding md5sums"
+        md5add
+#        sed -i '/^md5sums/,/).*$/d' PKGBUILD
+#        makepkg -g >> PKGBUILD
+#          sed -i 's/^md5sums/md5sums/' PKGBUILD
+        # Add newline after md5sum
+#        sed -i 's/\(^md5sums.*\)/\1\n/g' PKGBUILD
+        # Add line before build line
+#        sed -i 's/^\(build.*\)/\n&/g' PKGBUILD
+        # Add line, two lines above 'build' line (works, haven't implement try)
+        #sed '1{x;d};$H;/build/{x;s/^/\n/;b};x' PKGBUILD
+        makepkg -f --source
+      fi
+      ;;
+  t ) shift
+      builddir=/var/abs/local/personal/
+      [ ! -d $builddir ] && mkdir -p $builddir
+      echo $builddir
+      cd $builddir
+      [ -d "$@" ] && echo " package name already exists" && exit
+      mkdir "$@"
+      [ ! -f PKGBUILD.proto ] && cp /usr/share/pacman/PKGBUILD.proto . && \
+      echo "Using original PKGBUILD.proto (no template found in directory"
+      cp PKGBUILD.proto "$@"/PKGBUILD
+      sed -i "s/pkgname=.*/pkgname="$@"/" "$@"/PKGBUILD
+      ;;
+  h ) # Display help
+      echo " ${0##*/} <option> - makepkg building tasks:"
+      echo "   p - build package              (also installs dependencies)"
+      echo "   r - refresh                    (same ^ but remove src directory)"
+      echo "   s - build source-only tarball  (adds md5sums, tars for submission)"
+      echo "   t <pkg-name> - create new PKGBUILDcopy PKGBUILD (t)emplate to current folder"
+      exit
+      ;;
+  * ) makepkg "$@"
+  ;;
+esac

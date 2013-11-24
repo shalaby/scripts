@@ -1,0 +1,90 @@
+#!/bin/bash
+# Search file(s) for keyword
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        #
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} *<f|c> <path/file> <pattern> - list filenames/content containing pattern."
+  exit
+fi
+
+
+case $1 in
+  f ) # Search for pattern in current directory (when no file path is given)
+      shift
+      if [[ -z "$2" ]]; then
+        echo "$info Searching...  (this can take awhile for large directories)"
+        curdirsrch=$(grep -ilr "$1" `pwd` 2>&1 | grep -v "No such" \
+        | grep -v "Permission denied" | sort | sed -e "s:`pwd`/: :g")
+        if [[ -z "$curdirsrch" ]]; then
+          echo "$warn ${txtbld}"$1"${txtrst} was not found in any files in ${txtund}`pwd`${txtrst}"
+          else
+          echo "$pass Files with ${txtbld}$1${txtrst} in ${txtund}`pwd`${txtrst}:"
+          echo ""
+          echo "$curdirsrch\n"
+        fi
+      else
+        # Search for pattern in remote directory (when file path is given)
+        echo "$info Searching...  (this can take awhile for large directories)"
+        remdirsrch=$(grep -ilr "$1" "$2" 2>&1 | grep -v "No such" | grep -v "Permission denied" | sort | sed -e "s:^$2/: :g")
+        if [[ -z $remdirsrch ]]; then
+          echo "$warn ${txtbld}"$1"${txtrst} was not found in any files in ${txtund}"$2"${txtrst}"
+          else
+          echo "$pass Files with ${txtbld}$1${txtrst} in ${txtund}"$2"${txtrst}:"
+          echo ""
+          echo "$remdirsrch\n"
+        fi
+      fi
+      ;;
+  c ) # Search for pattern current directory (when no file path is given)
+      shift
+      if [[ -z "$2" ]]; then
+        curdirsrch=$(grep -iIlr "$1" `pwd` 2>&1 | grep -v "No such" | grep -v "Permission denied" | sort | sed -e "s:`pwd`/: :g")
+        if [[ -z "$curdirsrch" ]]; then
+          echo "$warn ${txtbld}"$1"${txtrst} was not found in any files in ${txtund}`pwd`${txtrst}"
+        else
+          echo "$pass Files with ${txtbld}$1${txtrst} in ${txtund}`pwd`${txtrst}:"
+          for file in $curdirsrch; do
+            echo ""
+            echo "${bldblu}"$file"${txtrst}:"
+            grep -in --colour=always "$1" "$file"
+          done
+          echo ""
+        fi
+      else
+        # Search for pattern in remote directory (when file path is given)
+        remdirsrch=$(grep -iIlr "$1" "$2" 2>&1 | grep -v "No such" | grep -v "Permission denied" | sort)
+        if [[ -z $remdirsrch ]]; then
+          echo "$warn ${txtbld}"$1"${txtrst} was not found in any files in ${txtund}"$2"${txtrst}"
+        else
+          echo "$pass Files with ${txtbld}$1${txtrst} in ${txtund}"$2"${txtrst}:"
+          for file in $remdirsrch; do
+            echo ""
+            echo "${bldblu}"$file"${txtrst}:"
+            grep -in --colour=always "$1" "$file"
+          done
+          echo ""
+        fi
+      fi
+      ;;
+  * ) # Search file for pattern
+      filesearch=$(grep -in --color=always $1 $2)
+      if [[ -z $filesearch ]]; then
+        echo "$warn ${txtbld}"$1"${txtrst} was not found in file ${txtund}"${2##*/}"${txtrst}"
+        else
+        echo
+#        echo -e "${bldblu}"${2##*/}"${txtrst}:"
+        echo "$filesearch\n"
+      fi
+      ;;
+esac

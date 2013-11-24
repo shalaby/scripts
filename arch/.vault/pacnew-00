@@ -1,0 +1,18 @@
+#!/bin/bash
+# pacnew-diff - merge *.pacnew files with original configurations with meld
+
+pacnews=$(find /etc -type f -name "*.pacnew")
+
+if [ -z $pacnews ]; then
+  echo " No configurations to update"
+fi
+
+for config in $pacnews; do
+  # save current configuration
+  # sudo cp ${config%\.*} ${config%\.*}.pacsave
+  #kdesu meld ${config%\.*} $config &
+  gksudo meld ${config%\.*} $config &
+  # remove .pacnew file
+  # sudo rm $config
+  wait
+done

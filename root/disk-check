@@ -1,0 +1,28 @@
+#!/bin/bash
+# Match parition check times, prompt for quick check
+
+# Disks/paritions to include
+disks=(/dev/sda4)
+
+# Filesystem check limits
+mount_limit=33                  # number of mounts before check
+mnt_lmt_exc=$[$mount_limit + 1] # mount limit exceed amount
+time_limit=6m                   # time limit before check m months, w weeks, d 
+
+# Prompt to match partition check times
+read -p " Match filesystem check times for partitions/disks? (y/n): " set_fsck
+if [ "$set_fsck" = "y" ]; then
+  for d in ${disks[@]}; do
+    sudo tune2fs -c "$mount_limit" -C 0 -i "$time_limit" -T now "$d"
+  done
+fi
+
+# Prompt for partition filesystem quick check on next boot
+read -p " Mark filesystem dirty for quick check? (y/n): " fsck_now
+echo "   To force a disk check (mark volume as 'dirty') you'll need to run 'fsck -fyv /dev/<yourdisk>' when your volume is not mounted." | fmt -c -u -w 80
+if [ "$fsck_now" = "y" ]; then
+  for d in ${disks[@]}; do
+    sudo tune2fs -C "$mount_limit_exceed" "$d"
+  done
+  sudo reboot
+fi

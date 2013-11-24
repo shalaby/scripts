@@ -1,0 +1,23 @@
+#!/bin/bash
+# chrootm - change root to current directory
+
+#echo "Where is the chroot mount point?"
+#read $MNTPNT
+
+#if [ -d $MNTPNT ]; then
+#  cp /etc/resolv.conf $MNTPNT/etc/resolv.conf
+#  mount -t proc none $MNTPNT/proc
+#  mount -o bind /dev $MNTPNT/dev
+#  mount -t sysfs none $MNTPNT/sys
+#  chroot $(MNTPNT) /bin/bash
+#  source /etc/profile
+#  grep -v rootfs /proc/mounts > /etc/mtab
+#  source ~/.bashrc; else
+#  echo "Mount point does not exist.  Exiting."
+#fi
+
+cp /etc/resolv.conf etc/resolv.conf
+mount -t proc none proc
+mount -o bind /dev dev
+mount -t sysfs none sys
+chroot . /bin/bash

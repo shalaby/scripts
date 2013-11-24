@@ -1,0 +1,22 @@
+#!/bin/bash
+# List open ports
+
+netstat -plunt
+
+# --
+
+# netstat -ant | egrep "LISTEN"
+# lsof -i :53
+
+# --
+
+#netstat -ant | grep LISTEN
+
+#netstat -tpun |\
+#sed '1 d' |\
+#sort -t/ +1 |\
+#fgrep -v 'TIME_WAIT' |\
+#fgrep -v 'FIN_WAIT' |\
+#fgrep -v 'CLOSING' |\
+#fgrep -v 'LAST_ACK' |\
+#fgrep -v '127.0.0.1'

@@ -1,0 +1,103 @@
+#!/bin/bash
+# common package management tasks
+
+if [[ -z $@ ]]; then
+  echo " ${0##*/} <option> <*package> - pacman management tasks:
+   1 | oneshot  - install package(s) as a dependency
+   c | clean    - cleans package cache of packages no longer installed
+   d | depclean - remove dependencies no longer used
+   e | explicit - force package to be recognized as necessary
+   f | forcerem - force remove package (no dependency check)
+   i | install  - install a package
+   l | list     - list files installed by the package
+   o | owns     - package that owns a file
+   n | info     - information about the package
+   p | local    - install package locally (a pkg.tar.gz file)
+   q | query    - query for an installed package (Q for details)
+   r | remove   - remove a package
+   s | search   - search for a package
+   u | upgrade  - sync database and upgrade system
+   y | sync     - sync database
+   ---
+   pkglist      - create list of official and local installed packages
+   ---"
+   exit
+fi
+
+case $1 in
+    1 | oneshot )       shift
+                        if [[ "${1#*.pkg.}"  == tar.gz ]]; then
+                          sudo pacman -U --asdeps "$@"
+                        else
+                          yaourt -S --asdeps "$@"
+                        fi
+                        ;;
+    c | clean )         sudo pacman -Sc
+                        ;;
+    d | depclean )      sudo pacman -Rs $(yaourt -Qtdq)
+                        ;;
+    e | explicit )      shift
+                        sudo pacman -S --asexplicit "$@"
+                        ;;
+    f | forcerem )      shift
+                        sudo pacman -Rcd "$@"
+                        ;;
+    i | ins | install ) shift
+                        #if [ -f /var/cache/pacman-local/"$arg".pkg.tar.gz ]
+                        #  then
+                        ## Check from AUR to find latest version
+                        ##  use aurtar script and curl to get ver#
+                        #for arg in "$@"; do
+                        #  if [ -f /var/cache/pacman-local/pkg/"$arg"*.pkg.tar.gz ]
+                        #  then
+                        #  pacman -U /var/cache/pacman-local/pkg/"$arg"*.pkg.tar.gz
+                        #  else
+                        #  packer -S "$@"
+                        #  fi
+                        #done
+                          #packer -S "$@"
+                          sudo -E packer -S "$@"
+                        #fi
+                        ;;
+    l | ls | list )     shift
+                        pacman -Qql "$@"
+                        ;;
+    o | own )           shift
+                        for arg in "$@"; do
+                          pacman -Qo `which $arg 2> /dev/null || echo $arg`
+                        done
+                        ;;
+    p | local )         shift
+                        sudo pacman -U "$@"
+                        ;;
+    n | info )          shift
+                        for arg in "$@"; do
+                          packer -Si $arg
+                        done
+                        ;;
+    q | query )         shift
+                        pacman -Qqs  "$@"
+                        ;;
+    Q | Query )         shift
+                        pacman -Qs  "$@"
+                        ;;
+    r | rm | remove )   shift
+# http://bbs.archlinux.org/viewtopic.php?pid=651952#p651952
+#                        sudo pacman -Rs "$@"
+                        sudo pacman -Rcs "$@"
+                        ;;
+    s | search )        shift
+                        packer -Ss "$@"
+                        ;;
+    u | upg | upgrade ) #packer -Syu --aur --noconfirm
+                        sudo -E packer -Syu #--noconfirm
+                        ;;
+    y | sync )          shift
+                        sudo pacman -Syy
+                        ;;
+    # ---
+    pkglist )           pacman -Qqe | grep -v "$(pacman -Qqm)" > pkglist-off.txt
+                        pacman -Qqm > pkglist-loc.txt
+                        ;;
+    * )                 sudo pacman "$@"
+esac

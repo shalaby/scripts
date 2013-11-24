@@ -1,0 +1,29 @@
+#!/bin/bash
+# implement power management tasks as a regular user
+
+
+case $1 in
+  shutdown )
+    echo " Shutting down..."
+    dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+    /org/freedesktop/Hal/devices/computer \
+    org.freedesktop.Hal.Device.SystemPowerManagement.Shutdown > /dev/null     ;;
+  restart )
+    echo " Rebooting..."
+    dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+    /org/freedesktop/Hal/devices/computer \
+    org.freedesktop.Hal.Device.SystemPowerManagement.Reboot > /dev/null       ;;
+  suspend )
+    echo " Suspending to RAM..."
+    dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+    /org/freedesktop/Hal/devices/computer \
+    org.freedesktop.Hal.Device.SystemPowerManagement.Suspend \
+    int32:0 > /dev/null                                                       ;;
+  hibernate )
+    echo " Suspending to disk..."
+    dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+    /org/freedesktop/Hal/devices/computer \
+    org.freedesktop.Hal.Device.SystemPowerManagement.Hibernate > /dev/null    ;;
+  * )
+    echo " ${0##*/} <shutdown|restart|suspend|hibernate>"
+esac

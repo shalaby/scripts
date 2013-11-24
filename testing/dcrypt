@@ -1,0 +1,11 @@
+#!/bin/bash
+# Decrypt encryted files
+
+filename=$@
+
+if [[ -z "$filename" ]]; then
+    echo " dcrypt <name of file> - decrypt des3 encrypted files"
+    exit;
+fi
+
+openssl des3 -d -salt -in "$FNAME" -out "${FNAME%.[^.]*}"

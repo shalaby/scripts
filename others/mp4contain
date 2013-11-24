@@ -1,0 +1,15 @@
+#!/bin/bash
+# Change video container(s) to mp4, requires compatible codecs
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <video(s)> - change video container(s) to mp4"
+  exit
+fi
+
+for v in "$@"; do
+  dest="$(realpath -s "$v")"
+  file="$(basename "$dest")"
+  mv "$v" /tmp
+  ffmpeg -i /tmp/"$file" -vcodec copy -acodec copy -f mp4 "${dest%.*}".mp4
+done

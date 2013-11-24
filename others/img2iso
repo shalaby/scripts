@@ -1,0 +1,14 @@
+#!/bin/bash
+# Convert .img file to .iso
+
+img=$1
+iso=$2
+
+# Usage - displays if full argument isn't given.
+if [[ -z $VARIABLE ]]; then
+    echo " img2iso <name.img> <name.iso> - converts .img imgs to .iso."
+    exit;
+fi
+
+mkisofs -pad -b $img -R -o $iso $img
+

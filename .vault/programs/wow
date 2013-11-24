@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Fix keyboard repeat
+xset -r 24
+xset -r 25
+xset -r 26
+xset -r 38
+xset -r 39
+xset -r 40
+
+wine "C:\Program Files\World of Warcraft\WoW.exe"
+#wine /home/todd/.wine/drive_c/Program\ Files/World\ of\ Warcraft/Wow.exe
+#cd ~/.wine/drive_c/Program\ Files/World\ of\ Warcraft/
+#wine Wow.exe

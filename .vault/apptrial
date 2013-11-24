@@ -1,0 +1,81 @@
+#!/bin/bash
+
+###:: Apple Trailer Checker and Downloader. (www.apple.com/trailers/)
+
+Q='720p' # 480p, 720p, 1080p
+M='WBO'  # WBO, OTW, ONE
+C='1'    # Yes, cURL
+D='.'    # Directory
+J='20'   # Threads
+CLR='\x1b[37;22m' # Text Color
+EOC='\x1b[m'
+
+TEMP='/tmp/aPpLeTrAiLeRcHeCk'
+ROOT='http://www.apple.com'
+FAKE='QuickTime/7.6.2 (qtver=7.6.2;os=Windows NT 5.1Service Pack 3)'
+
+while getopts 'q:012n' opt ; do
+   case $opt in
+      q) Q=$OPTARG ;;
+      0) M='ONE'   ;;
+      1) M='WBO'   ;;
+      2) M='OTW'   ;;
+      n) C='0'     ;;
+   esac
+done
+shift `expr $OPTIND - 1`
+
+[ $C == 1 ] && curl -s $ROOT/trailers/ -o "$TEMP"
+
+if [ "$M" == 'WBO' ] ; then
+   IFS='
+'
+   WBO_U=($(sed '/Weekend Box Office/,/weekendboxoffice/!d;/<li>/!d' "$TEMP" | cut -d\" -f4))
+   unset IFS
+
+   echo -ne "$CLR"
+   echo '--== Weekend Box Office ==--'
+   sed '/Weekend Box Office/,/weekendboxoffice/!d;/<li>/!d;s/<[^>]*>//g;s/&amp;/\&/g;s/&hellip;/.../;s/^\t*/   /' "$TEMP"
+   echo -ne "$EOC"
+
+   echo 'Which ones are you interested in?' # e.g. reply:1 3 10
+
+   read -a WBO_C
+   for i in ${WBO_C[@]} ; do
+      ((i--))
+      #echo ${WBO_U[$i]}
+      curl -s $ROOT${WBO_U[$i]} -o "$TEMP"X
+      tr '<>' '\n' < "$TEMP"X | grep -F "$Q.mov" | sed 's/.*\(http.*_\)\([0-9]*p\.mov\).*/\1h\2/' |
+      while read url ; do
+         #echo $url
+         aria2c -d "$D" -j "$J" -U "$FAKE" "$url"
+      done
+   done
+elif [ "$M" == 'OTW' ] ; then
+   IFS='
+'
+   OTW_U=($(sed '/Opening this Week/,/openingthisweek/!d;/<li>/!d' "$TEMP" | cut -d\" -f4))
+   unset IFS
+
+   echo -ne "$CLR"
+   echo '--== Opening this Week ==--'
+   sed '/Opening this Week/,/openingthisweek/!d;/<li>/!d;s/<[^>]*>//g;s/&amp;/\&/g;s/&hellip;/.../;s/^\t*//' "$TEMP" | sed '=' | sed 'N;s/\n/. /;s/^/   /'
+   echo -ne "$EOC"
+
+   echo 'Which ones are you interested in?'
+
+   read -a OTW_C
+   for i in ${OTW_C[@]} ; do
+      ((i--))
+      #echo ${OTW_U[$i]}
+      curl -s $ROOT${OTW_U[$i]} -o "$TEMP"X
+      tr '<>' '\n' < "$TEMP"X | grep -F "$Q.mov" | sed 's/.*\(http.*_\)\([0-9]*p\.mov\).*/\1h\2/' |
+      while read url ; do
+         #echo $url
+         aria2c -d "$D" -j "$J" -U "$FAKE" "$url"
+      done
+   done
+elif [ "$M" == 'ONE' ] ; then
+   url=$(echo "$1" | sed 's/[0-9]*p.mov$/h&/')
+   aria2c -d "$D" -j "$J" -U "$FAKE" "$url"
+fi

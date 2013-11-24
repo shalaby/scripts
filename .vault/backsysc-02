@@ -1,0 +1,85 @@
+#!/bin/bash
+# Backup system configurations
+
+# Source Directory (trailing / will cp the dir contents, w/o the dir itself)
+src_dir="/"
+
+# Destination Parent Directory
+dsp_dir="/mnt/Backup"
+dsp_dir="/run/media/todd/Backup/rsync"
+
+# Destination Directory
+comp="${HOSTNAME}"; dist="arch"; type="config"; date="$(date "+%F")"
+dst_dir="$dsp_dir"/"$comp"_"$date"_"$type"
+
+# Include, exclude, and note file locations
+incl_file="${0}"-inc.txt
+excl_file="${0}"-exc.txt
+note_file="${0}"-nte.txt
+
+# Source, Destination Parent Directories existence check
+srd_dir_chk () {
+for d in "$src_dir" "$dsp_dir"; do
+  if [ ! -d "$d" ]; then
+    echo " Directory "$d" doesn't exist." && exit
+  else
+    echo " Directory "$d" exists."
+  fi
+done
+}
+
+# Destination Directory existence check and creation
+dst_dir_crt () {
+if [ ! -d "$dst_dir" ]; then
+  mkdir "$dst_dir"
+  echo " Created destination directory "$dst_dir""
+else
+  echo " Destination directory "$comp"_"$date"_"$type" already exists."
+fi
+}
+
+scrp_help () {
+echo " ${0##*/} <i|e|n|c> - backup configurations
+  i - add to the include list a file or folder
+  e - add to the exclude list a file or folder or regexp pattern
+  n - add note
+  c - create backup"
+}
+
+case $1 in
+  i ) # Add to include list file or folder
+      shift
+      for f in "$@"; do
+        # Check if selection(s) exist
+        if [ ! -e "$f" ]; then
+          echo " File \""$f"\" does not exist."
+          continue
+        fi
+        # Append file/folder to include list
+        full_path=$(readlink -f "$f")
+        echo "$full_path" >> "$incl_file" && \
+        echo " Added \""$f"\" to ${incl_file##*/} include file."
+      done
+      # Sort entries, erase duplicates
+      sort -u "$incl_file" -o "$incl_file" ;;
+  e ) # Add to exclude list file or folder
+      shift
+      for f in "$@"; do
+        # Append file/folder to exclude list
+        full_path=$(readlink -f "$f")
+        echo "$full_path" >> "$excl_file" && \
+        echo " Added \""$f"\" to ${excl_file##*/} exclude file."
+      done
+      # Sort entries, erase duplicates
+      sort -u "$excl_file" -o "$excl_file" ;;
+  n ) # Add to note file
+      shift
+      echo ""$date"-"$(date "+%r")": "$@"" >> "$note_file" && \
+      echo " Added string to \""$note_file"\"." ;;
+  c ) # Backup configurations
+      srd_dir_chk
+      dst_dir_crt
+      sudo rsync -axSv --delete-excluded --files-from="$incl_file" --exclude-from="$excl_file" "$src_dir" "$dst_dir" ;;
+  * ) # Display usage if no parameters give
+      scrp_help ;;
+esac

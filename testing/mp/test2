@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Remove trailing blank lines
+while [ "$(tail -n 1 PKGBUILD)" == "" ]; do
+  sed -i '$d' PKGBUILD
+done
+
+# Delete previous md5sum entries
+sed -i "/^.*'[a-z0-9]\{32\}'.*$/d" PKGBUILD
+sed -i "md5sum/d" PKGBUILD
+
+# Cut then delete the build section
+sed -e '/^build() {$/,$!d' > /tmp/PKGBUILD.tmp
+sed -i '/^build() {$/,$d' PKGBUILD
+
+# Remove trailing blank lines
+sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' PKGBUILD
+
+# Add md5sums
+makepkg -g >> PKGBUILD
+
+# Add two blank lines to seperate variable and build section
+echo -e "\n" >> PKGBUILD
+
+# Re-append build section
+cat /tmp/PKGBUILD.tmp >> PKGBUILD
+
+# Delete two consecutative blank lines
+#sed -e '/^$/N;/\n$/d' PKGBUILD

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+## Downloads and Extract ##
+cd ~/.src/snort && \
+#!wget http://dl.snort.org/barnyard/barnyard-0.2.0.tar.gz
+#!wget http://dfn.dl.sourceforge.net/sourceforge/adodb/adodb509a.tgz && \
+tar xvf barnyard-0.2.0.tar.gz && \
+## Barnyard Install and Configure ##
+cd barnyard-0.2.0 && \
+./configure --enable-mysql --with-mysql-libraries=/usr/lib --prefix=/usr && \
+make && \
+make install && \
+cp etc/barnyard.conf /etc/snort && \
+# Comment out snort writing to mysql database if entered
+sed -i -e 's`^output database.*mysql.*`#&`g' /etc/snort/snort.conf && \
+# Uncomment unified logging in snort.conf
+sed -i -e 's`^# output alert_unified`output alert_unified`g' /etc/snort/snort.conf && \
+sed -i -e 's`^# output log_unified`output log_unified`g' /etc/snort/snort.conf && \
+# Config hostname, interface, ouput in barnyard.conf
+sed -i -e 's`config hostname: snorthost`config hostname: part-pmac`g' /etc/snort/barnyard.conf && \
+sed -i -e 's`config interface: fxp0`config interface: eth1`g' /etc/snort/barnyard.conf && \
+sed -i -e '^# alert_acid_db: mysql.*/a output alert_acid_db: mysql, sensor_id 1, database snort_log, server localhost, user snort, password abcdefg' /etc/snort/barnyard.conf && \
+sed -i -e '^# log_acid_db: mysql.*/a output log_acid_db: mysql, database snort_log, server localhost, user snort, password abcdefg, detail full' /etc/snort/barnyard.conf && \
+# Create waldo file
+echo "/var/log/snort
+#snort.log" >> /var/log/snort/barnyard.waldo && \
+# Test barnyard
+echo "/var/log/snort/barnyard.waldo will need to be edited.  Run snort and get the newest date id of the log (i.e. /var/log/snort/snort.log.xxxxyyyyzz) and add it:
+xxxxyyyyzz
+0"
+# looks like snort before barnyard
+echo "barnyard -c /etc/snort/barnyard.conf -g /etc/snort/gen-msg.map -s /etc/snort/sid-msg.map -d /var/log/snort -f snort.log -w /var/log/snort/barnyard.waldo"

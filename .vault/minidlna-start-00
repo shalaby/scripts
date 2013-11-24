@@ -1,0 +1,27 @@
+#!/bin/bash
+# Restart minidlna with new database
+# https://dev.openwrt.org/ticket/8740 # start script, inotify fix
+
+cnf="/home/$USER/.minidlna/minidlna.conf"
+pid="/home/$USER/.minidlna/minidlna.pid"
+log="/home/$USER/.minidlna/minildna.log"
+
+# Program(s) required
+progs_req=(minidlna)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Stop minidlna if already running
+if [ "$(pidof minidlna)" ]; then
+  killall -9 minidlna && sleep 2 \
+  echo " Stopping minidlna daemon"
+else
+  echo " minidlna is not running"
+fi
+
+# Rebuild database, start minidlna daemon
+#minidlna -R -f "$conf" -P "$pid" &&
+minidlna -R -d -f "$cnf" -P "$pid" > $log 2>&1 &
+echo " Starting minidlna daemon with new database"

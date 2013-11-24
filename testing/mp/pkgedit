@@ -1,0 +1,21 @@
+#!/bin/bash
+
+awk /build/ && !/\)$/ {
+  # if build found but does not end in )
+  s=$0
+  getline #get the next line
+  s=s$0 # join them
+  # if you are sure those statements don't span more than 2 lines
+  print s
+}
+/build/ && /\)$/{
+    f=0    #remove flag
+    print $0 # print the current line
+    for(i=1;i<=d;i++){ print a[i]  } #print the array of lines after source  and before build
+    g=0 #because build already found, set g flag to 0 so the below !g part can print other lines
+    delete a # remove array after found
+    next
+}
+/source/{ f=1; g=1 } #if source found, set flag f and g.
+f{ a[++d]=$0 } # if source is found, store lines after source into array, then continue to search for build
+!g' PKGBUILD

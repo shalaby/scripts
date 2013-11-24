@@ -1,0 +1,46 @@
+#!/bin/bash
+# Add file/folders to the tar exclude file (for backing up configurations)
+
+backlsdir="/home/todd/.scripts/root/arch/backup"
+excfile=$backlsdir/bckcfg-exc.txt
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}*${txtrst}
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} '<path/*/files...>' - add exclusions to backup configuration"
+  exit
+fi
+
+# Check if folder exists
+if [ ! -d $backlsdir ]; then
+  echo "Directory and exclude file do not exist: $excfile"
+  echo "Exiting"
+  exit
+fi
+
+# Check if file exists
+if [ ! -f $excfile ]; then
+  echo "Exclude file does not exists: $excfile"
+  echo "Exiting"
+  exit
+fi
+
+echo "$info bce doesn't check valid paths because the exclude file can contain regexps."
+echo "$warn Be sure the path is correct! (e.g '/mnt/win/*')"
+echo -n "Add this path to the exclude file? (${txtbld}y${txtrst}/${txtbld}n${txtrst}): "
+read question
+if [[ $question == [Yy] ]]; then
+  echo "$@" >> $excfile
+  echo "$pass Added ${txtund}"$@"${txtrst} to the backup-cfg exclude file" else
+  exit
+fi

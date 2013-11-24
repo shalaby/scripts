@@ -1,0 +1,43 @@
+#!/bin/bash
+# Extract common file formats
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <archive> - extract common file formats"
+  exit
+fi
+
+# Program(s) required
+progs_req=(7z bsdtar unrar)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Test if file(s) exists
+for f in $@; do
+  if [ ! -f "$f" ]; then
+    echo " File non-exist: "$f"" && file_non=true
+  fi; done; if [[ $file_non = true ]]; then exit 1; fi
+
+# Extract file by using extension as reference to type
+for a in $@; do
+  case "$a" in
+    *.7z      ) 7z  x       "$f"                ;;
+    *.tar.bz2 ) tar xvjf    "$f"                ;;
+    *.bz2     ) bunzip2     "$f"                ;;
+    *.deb     ) ar  vx      "$f"                ;;
+    *.tar.gz  ) tar xvf     "$f"                ;;
+    *.gz      ) gunzip      "$f"                ;;
+    *.tar     ) tar xvf     "$f"                ;;
+    *.tbz2    ) tar xvjf    "$f"                ;;
+    *.tar.xz  ) tar xvf     "$a"                ;;
+    *.tgz     ) tar xvzf    "$f"                ;;
+    *.rar     ) unrar x     "$f"                ;;
+    #*.rar     ) 7z  x       "$f"                ;;
+    #*.zip     ) unzip       "$f"                ;;
+    *.zip     ) unzip xf   "$f"                ;;
+    *.Z       ) uncompress  "$f"                ;;
+    *         ) echo " Unsupported file format" ;;
+  esac
+done

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+## Adodb ##
+cd ~/.src/snort
+wget http://easynews.dl.sourceforge.net/sourceforge/sourceforge/adodb/adodb509a.tgz
+tar xvf adodb509a.tgz -C /usr/share/php/ && \
+#? Edit php path
+#sed -i -e 's`;include_path = ".:/usr/share/php"`include_path = ".:/usr/share/php:/usr/share/php/adodb5`g' /etc/php5/apache2/php.ini
+## Pear ##
+pear upgrade-all && \
+pear install Image_Color && \
+pear install Image_Canvas-alpha && \
+pear install Image_Graph-alpha && \
+pear install Numbers_Roman && \
+#pear install Mail
+#pear install Mail_mime
+# Base
+wget http://downloads.sourceforge.net/secureideas/base-1.4.1.tar.gz && \
+tar xvf base-1.4.1.tar.gz && \
+mv base-php4 /var/www/base && \
+echo "now edit /var/www/base/base_conf.php.dist or setup with the webbrowser at http://(ip or localhost)/base/setup"

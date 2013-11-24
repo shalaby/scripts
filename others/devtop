@@ -1,0 +1,9 @@
+#!/bin/bash
+# Print disk usage
+
+# Key word exclusions (seperated by space)
+exclude=(sandfox)
+
+df -h | grep -e '^Filesystem' -e '^/dev'  | \
+grep -vf <(printf "%s\n" "${exclude[@]}") | \
+sed 's/^/ /g'

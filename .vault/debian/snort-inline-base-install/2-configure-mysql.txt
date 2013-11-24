@@ -1,0 +1,30 @@
+Create Snort Database, User, Security
+
+mysql -u root -p
+show databases;
+drop user '';       # Delete anonymous user
+create database snort_log;
+create database snort_archive;
+grant CREATE,DELETE,INSERT,UPDATE,SELECT on snort_log.* to snort@localhost;
+grant CREATE,DELETE,INSERT,UPDATE,SELECT on snort_archive.* to snort@localhost;
+SET PASSWORD FOR snort@localhost=PASSWORD('marleeandmeasyouwishfib');
+flush privileges;
+exit;
+
+Import an old database if there is one, otherwise import a database schema.
+
+mysql -u root -p snort_log < snort_log.sql
+mysql -u root -p snort_archive < snort_archive.sql
+
+bzcat /usr/share/doc/snort-<version>/schemas/create_mysql.bz2 | mysql -u root -p snort_log
+
+Note: importing to snort_archive didn't work as I expected it to, not all tables in the database were created, instead I had to output snort_log and import it to snort_archive:
+
+mysqldump --opt -u root -p snort_log > snort_structure.sql
+mysql -u root -p snort_archive < snort_structure.sql
+
+Check to see if structure was created:
+
+mysql -u root -p snort
+show tables;
+exit;

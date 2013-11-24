@@ -1,0 +1,15 @@
+#!/bin/bash
+# mouse-button-toggle
+# Switch left-click, right-click mouse and touchpad buttons (fixes sticky
+# [software related] HP pavilion touchpad buttons.
+
+# Detect current mouse button position
+state=$(xmodmap -pp | sed -n '5p' | awk '{ print $2 }')
+
+# Detect mouse button position and switch mouse button
+if [ "$state" == "1" ]
+then
+  xmodmap -e "pointer = 3 2 1" > /dev/null
+else
+  xmodmap -e "pointer = 1 2 3" > /dev/null
+fi 

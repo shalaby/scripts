@@ -1,0 +1,19 @@
+#!/bin/bash
+# test snort
+
+if [[ -n `ps aux | grep "snort -c"` ]]; then
+ /etc/init.d/snort stop
+fi
+
+# Add logging to MySQL (* Edit) (Not needed for barnyard)
+sed -i -e "s/output database: log, oracle, dbname=snort user=snort password=test/output database: log, oracle, dbname=snort user=snort password=test\
+#output database: log, mysql, user=snort password=123456 dname=snort_log host=localhost/g" /etc/snort/snort.conf && \
+echo " starting snort" && \
+/etc/init.d/snort start && \
+# Test alert
+echo " Queing all port 80's in iptables:" && \
+iptables -I INPUT -p tcp --dport 80 -j QUEUE && \
+echo " 'links http://localhost' to generate alert."
+echo " 'cat /var/log/snort/alert*' to check for alerts to file"
+echo " 'mysql -u root -p snort_log' to load snort database"
+echo " 'select * from event;' to list database alerts'"

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <prog1> <prog2> ... - forcibly close multiple programs"
+  exit
+fi
+
+for i in $@; do
+  pkill $1
+  shift
+done

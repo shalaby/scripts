@@ -1,0 +1,17 @@
+# /etc/network/interfaces
+
+# Loopback interface
+auto lo
+iface lo inet loopback
+
+# Bridge for snort
+auto br0
+iface br0 inet dhcp
+bridge_ports eth0 eth1
+bridge_maxwait 0
+
+# LAN NIC
+auto eth2
+iface eth2 inet static
+  address 192.168.89.100
+  netmask 255.255.255.0

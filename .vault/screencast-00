@@ -1,0 +1,28 @@
+#!/bin/bash
+# Create screencasts of area, full-screen, or window
+
+# Program(s) required
+progs_req=(ffcast ffmpeg)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Name screencast sequentially
+#cstprev=$(ls -1 screencast-[0-9][0-9][0-9][0-9]* | tail -1 2&> /dev/null)
+#if [ $? -ne 0 ]; then
+if ! [ -f screencast-[0-9][0-9][0-9][0-9]* ]; then
+  cstname=screencast-0000
+else
+  cstprev=$(ls -1 screencast-[0-9][0-9][0-9][0-9]* | tail -1)
+  cstnumb=$(echo $cstprev | grep -o [0-9][0-9][0-9][0-9])
+  cstname=screencast-$(printf "%04u" $((++cstnumb)))
+fi
+
+case $1 in
+  a ) ffcast -s  ffmpeg -- -vcodec huffyuv -sameq -acodec pcm_s16le -f alsa -i pulse -ac 2 $cstname-area.avi ;;
+  f ) ffcast     ffmpeg -- -vcodec huffyuv -sameq -acodec pcm_s16le -f alsa -i pulse -ac 2 $cstname-full.avi ;;
+  m ) ffcast -s % ffmpeg -f x11grab -follow_mouse 100 -s %wx%h -i :0.0+%x+%y -vcodec huffyuv -sameq -acodec pcm_s16le -f alsa -i pulse -ac 2 $cstname-mous.avi ;;
+  w ) ffcast -wb ffmpeg -- -vcodec huffyuv -sameq -acodec pcm_s16le -f alsa -i pulse -ac 2 $cstname-wind.avi ;;
+  * ) echo " ${0##*/} <a|f|m|w> - create screencasts (a)rea (f)ull-screen (m)ouse (w)indow"
+esac

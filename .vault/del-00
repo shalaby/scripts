@@ -1,0 +1,19 @@
+#!/bin/bash
+# rm replacement, mv files to trash rather than deleting them.
+
+trashdir=~/.local/share/Trash/files/
+
+#for f in "$@"
+  #do
+    #if [ -e "$trashdir"/"$f" ]
+      #then
+        #mv "$trashdir"/"$f"{,.bck}
+        #echo ""$f" exists already in trash."
+        #echo "Old version renamed to: "$f".bck"
+      #else
+#        echo ""$trashdir"/"$f""
+        #exit
+    #fi
+  #done
+
+mv -t "$trashdir" --backup=t --verbose "$@"

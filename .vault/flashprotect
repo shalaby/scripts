@@ -1,0 +1,34 @@
+#!/bin/bash
+# flashprotect - be sure flash cache is nullified
+
+#set -x
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+txtrst=$(tput sgr0)             # Reset
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+home=/home/todd
+adotest=$(readlink -f $home/.adobe)
+mactest=$(readlink -f $home/.macromedia)
+
+# Check if cache is nullified, else fix and warn
+if [ $adotest == /dev/null ] && [ $mactest == /dev/null ]; then
+#	echo "$pass Flash cache is protected."
+	exit
+	else
+	rm -r ~/.adobe 2&> /dev/null
+	rm -r ~/.macromedia 2&> /dev/null
+	ln -sf /dev/null $home/.adobe
+	ln -sf /dev/null $home/.macromedia
+  chown root:root $home/.adobe
+  chown root:root $home/.macromedia
+	echo "$warn Flash cache active!  Flash cache has been nullified."
+#	if [ $(whoami) == root ]; then
+#		echo "Flash cache was active!" | mail -s "Flash cache had been enabled!" toddrpartridge@gmail.com
+#	fi
+fi

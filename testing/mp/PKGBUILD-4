@@ -1,0 +1,40 @@
+pkgname=somepkg-name
+pkgver=1
+pkgrel=1
+pkgdesc="package description"
+arch=('i686' 'x86_64')
+url="http://www.myurl.com"
+license=('GPL')
+depends=('xorg-server' 'sdl' 'mesa')
+
+files=('hello.desktop'
+       'fix-me.patch'
+       'respect.patch'
+       '....')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  ./configure --prefix=/usr
+  make || return 1
+
+  echo "* Copying files..."
+
+  # game folder
+  cp -R $_instname $pkgdir/usr/share/games/$pkgname
+
+  # licenses
+  install -m644 $_instname/eula.txt $pkgdir/usr/share/licenses/$pkgname/
+
+  # executable link
+  ln -s /usr/share/games/$pkgname/$_instname $pkgdir/usr/bin/$pkgname
+
+  # icon/.desktop
+  install -m644 $_instname/icons/scalable.svg $pkgdir/usr/share/icons/$pkgname.svg
+  install -m644 $startdir/$pkgname.desktop $pkgdir/usr/share/applications/
+}
+
+check=('4efd6a3e59f8d5ad17d3896e0359ed30'
+       '1b25c7f9cf156a3b95d00a46f5dffbd8'
+       'a9bf177ce160b1d56325d3c83eb9ebb9')
+

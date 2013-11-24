@@ -1,0 +1,23 @@
+#!/bin/bash
+# Remove HTML tags from a file
+
+# Text color variables
+TXTBLD=$(tput bold)     # Bold
+TXTUND=$(tput sgr 0 1)  # Underline
+TXTRED=$(tput setaf 1)  # Red
+TXTGRN=$(tput setaf 2)  # Green
+TXTYLW=$(tput setaf 3)  # Yellow
+TXTBLU=$(tput setaf 4)  # Blue
+TXTPUR=$(tput setaf 5)  # Purple
+TXTCYN=$(tput setaf 6)  # Cyan
+TXTWHT=$(tput setaf 7)  # White
+TXTRST=$(tput sgr0)     # Reset
+
+# Usage - display full argument if isn't given.
+if [[ -z "$@" ]]; then
+  echo " ${TXTRST}${TXTCYN}htmlstrip <file>${TXTRST} - remove html tags from a file${TXTRST}"
+  exit
+fi
+
+sed -i -e 's/<[^>]*>//g' "$@"
+

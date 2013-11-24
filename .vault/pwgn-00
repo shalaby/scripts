@@ -1,0 +1,20 @@
+#!/bin/bash
+# pwgn - pw creation
+
+# Check if pwgen is installed
+hash pwgen 2>&- || { echo >&2 "* Fail: 'pwgen' is not installed."; exit 1; }
+
+# Check if old.editor exists
+#if [ -f $HOME/.editor ]; then
+#  read -p "* Old.editor exists, create a new.editor? (Y/n)"	
+
+# Ask before creating.editor because old.editor will be erased.
+while true; do
+  read -p "* OLD .rubicon will be erased!!!  Create a new .rubicon? (Y/n): " Yn
+  case $Yn in
+    [Y]*  ) pwgen --capitalize --numerals --secure -1 > $HOME/.rubicon; break;;
+    [Nn]* ) exit;;
+    *     ) echo "  Answer 'Y' for yes, 'n' for no."
+  esac
+done
+

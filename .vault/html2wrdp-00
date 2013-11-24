@@ -1,0 +1,52 @@
+#!/bin/bash
+# Convert HTML to Wordpress blogging format
+
+# Program(s) required
+progs_req=(tidy)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <htmlfile> - convert HTML to Wordpress blogging format"
+  exit
+fi
+
+# Check if selection exists
+if [ ! -f "$@" ]; then
+  echo " Selection \""$@"\" does not exist."
+  exit
+fi
+
+## Newlines
+
+# Newline after headers
+sed -i 's/\(^<h[1-5].*\)/\1\n/g' "$@"
+
+# Remove paragraph tags, newline after
+sed -i 's/<p>//g'    "$@"
+sed -i 's|</p>|\n|g' "$@"
+
+# Convert breaks to newlines
+sed -i 's|<br />|\n|g' "$@"
+
+## Code/Pre
+
+# Remove four space after <code> and during code blocks (fix for Gedit
+# having to use eight spaces for syntax recognition of code lines)
+sed -i 's/<code>    /<code>/g' "$@"
+sed -i 's/^    //g'            "$@"
+
+# Only <pre> tags necessary (i.e. not <pre><code>)
+#sed -i 's|<pre.*><code.*>|<pre>|g' "$@"
+#sed -i 's|</code></pre>|</pre>\n|g'  "$@"
+
+# Delete pre entirely (if using custom CSS boxes):
+#sed -i 's|<pre>||g'    "$@"
+#sed -i 's|</pre>|\n|g' "$@"
+
+# Remove pre tags since will use custom format
+
+# Delete trailing newlines

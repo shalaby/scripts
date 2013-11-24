@@ -1,0 +1,40 @@
+#!/bin/bash
+# full system backup
+
+# Backup destination
+#backdest=/opt/backup
+#backdest=/mnt/usb
+backdest=/home/todd/Personal/Computers/Backups
+
+# Labels for backup name
+#PC=${HOSTNAME}
+pc=pavilion
+distro=arch
+type=full
+date=$(date "+%F")
+backupfile="$backdest/$distro-$type-$date.tar.gz"
+
+# Exclude file location
+excdir="/home/todd/.bin/root/backup"
+exclude_file="$excdir/$prog-exc.txt"
+
+# Check if chrooted prompt.
+echo -n "First chroot from a LiveCD.  Are you ready to backup? (y/n): "
+read executeback
+
+# Check if exclude file exists
+if [ ! -f $exclude_file ]; then
+  echo -n "No exclude file exists, continue? (y/n): "
+  read continue
+  if [ $continue == "n" ]; then exit; fi
+fi
+
+if [ $executeback = "y" ]; then
+  tar --exclude-from=$exclude_file -czpvf $backupfile /
+fi
+
+# Mount point
+#mountpoint=/mnt/arch
+#cd $MOUNTPOINT
+# dd if=/dev/hda bs=4k | gzip > /mnt/hdb1/system_drive_backup.img.gz
+# gzip -dc /mnt/hdb1/system_drive_backup.img.gz | dd of=/dev/hda

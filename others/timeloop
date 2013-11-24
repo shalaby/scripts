@@ -1,0 +1,7 @@
+#!/bin/bash
+# Dynamically print the current time
+
+while true; do
+  printf "\r$(date "+%T") "
+  sleep 1
+done

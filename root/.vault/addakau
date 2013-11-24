@@ -1,0 +1,42 @@
+#!/bin/bash
+# add newuser, copy configs
+
+orguser=todd
+newuser=akau
+orgdir=/home/$orguser
+newdir=/home/$newuser
+
+addfiles=(
+.bashrc
+.bin
+.nvidia-settings-rc
+#.urbanterror
+.vim
+.vimrc)
+
+# Delete user if still exists and home directory if necessary
+if [[ -n $(grep $newuser /etc/passwd) ]]; then
+  if [[ -d $newdir ]]; then
+    userdel -r akau
+    echo "* Deleted previous user $newuser and home directory"; else
+    userdel akau
+    echo "* Deleted previous user $newuser"
+  fi
+fi
+
+# Add new user
+expire=$(date --date="7 days" "+%F")
+useradd -m -e $expire -u 1051 -p $(cat /root/passakau) -G users,video,audio,optical,storage,power -s /bin/bash akau
+echo "* Added user $newuser"
+
+
+echo "* Copying configs"
+for i in ${addfiles[@]}; do
+  cp -r $orgdir/$i $newdir
+done
+
+ln -s /dev/null $newdir/.adobe
+ln -s /dev/null $newdir/.macromedia
+chown -R akau:users $newdir
+cp -r /home/todd/.goggles $newdir
+echo "* Done"

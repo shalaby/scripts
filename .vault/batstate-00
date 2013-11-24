@@ -1,0 +1,98 @@
+#!/bin/bash
+# batstate - battery status script
+
+BATTERYMAIN=BAT0
+BAT0OUTPUT=""
+#BATTERYBAY=BAT1
+#BAT1OUTPUT=""
+
+for BATTERY in $BATTERYMAIN
+do
+    REM_CAP=`grep "^remaining capacity" /proc/acpi/battery/$BATTERY/state | awk '{ print $3 }'`
+    FULL_CAP=`grep "^last full capacity" /proc/acpi/battery/$BATTERY/info | awk '{ print $4 }'`
+    BATSTATE=`grep "^charging state" /proc/acpi/battery/$BATTERY/state | awk '{ print $3 }'`
+
+    CHARGE=`echo $(( $REM_CAP * 100 / $FULL_CAP ))`
+
+    NON='\033[00m'
+    BLD='\033[01m'
+    RED='\033[01;31m'
+    GRN='\033[01;32m'
+    YEL='\033[01;33m'
+
+    COLOUR="$RED"
+
+    case "${BATSTATE}" in
+       'charged')
+       BATSTT="$BLD$NON"
+       ;;
+       'charging')
+       BATSTT="$BLD$NON"
+       ;;
+       'discharging')
+       BATSTT="$BLD$NON"
+       ;;
+    esac
+
+# prevent a charge of more than 100% displaying
+    if [ "$CHARGE" -gt "99" ]
+    then
+       CHARGE="100"
+    fi
+
+    if [ "$CHARGE" -gt "15" ]
+    then
+       COLOUR="$YEL"
+    fi
+
+    if [ "$CHARGE" -gt "30" ]
+    then
+       COLOUR="$GRN"
+    fi
+
+    CHARGE="$CHARGE %"
+
+
+    if [ "$BATSTATE" = "charged" ]
+    then
+        # if the battery is full then don't display the charge, just =
+        CHARGE=""
+        BATLABEL="GRN"
+    elif [ "$BATSTATE" = "charging" ]
+    then
+        # if the battery is charging then don't show it
+        CHARGE=""
+        BATLABEL="$YEL"
+    else 
+        BATLABEL="$RED"
+    fi
+
+    if [ $BATTERY = "BAT0" ]
+    then
+        BAT0OUTPUT="${BATLABEL}0:${COLOUR}${CHARGE}${NON}${BATSTT}"
+        BAT0STATUS="$BATSTATE"
+    elif [ $BATTERY = "BAT1" ]    
+    then
+        BAT1OUTPUT="${BATLABEL}1:${COLOUR}${CHARGE}${NON}${BATSTT}"
+        BAT1STATUS="$BATSTATE"
+    fi
+done
+
+# if the BAT0 is charged show BAT1
+if [ $BAT0STATUS = "charged" ] && [ $BAT1STATUS != "charged" ]
+then
+    echo -e $BAT1OUTPUT
+elif [ $BAT0STATUS = "discharging" ]
+then
+    # if the BAT0 is discharging...show it
+    echo -e $BAT0OUTPUT
+elif [ $BAT0STATUS = "charging" ]
+then
+    # if the BAT0 is charging show it
+    echo -e $BAT0OUTPUT
+elif [ $BAT1STATUS = "charging" ]
+then
+    echo -e $BAT1OUTPUT
+fi
+
+# end of file

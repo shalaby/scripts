@@ -1,0 +1,50 @@
+#!/bin/sh
+# Download web-based, ranked, pacman mirror list
+
+country='US'
+url="https://www.archlinux.org/mirrorlist/?country=US&protocol=http&ip_version=4&use_mirror_status=on"
+
+tmpfile=$(mktemp --suffix=-mirrorlist)
+
+# Download
+url_chk () { curl -s "$url" | sed -n 2p | grep "## Arch Linux repository mirrorlist" > /dev/null ; }
+if $url_chk; then
+  curl -s "$url" > "$tmpfile" && echo "Downlaod
+  chmod 644        "$tmpfile"
+else
+  echo " URL invalid: "$url""
+  exit
+fi
+
+# Edit
+sed -i 's/^#Server/Server/g'          "$tmpfile"
+echo '<!-- vim: se ai syn=sh: -->' >> "$tmpfile"
+
+# View
+while true; do
+  read -p " View the downloaded mirrorlist? (y/n): " yn
+  case $yn in
+    [Yy] )  if hash ! vim 2>&- ; then # use vim if available
+              editor=nano; else
+              editor=vim ; fi
+            $editor "$tmpfile"
+            break 2 ;;
+    [Nn] )  break 2 ;;
+    [*]  )  true
+  esac
+done
+
+# Backup
+if [ ! -f /etc/pacman.d/mirrorlist ]; then
+  echo " Warn: no previous mirrorlist"
+fi
+if [ -f /etc/pacman.d/mirrorlist_[0-9][0-9] ]; then
+  ls -1 /etc/pacman.d/mirrorlist_[0-9][0-9] | tail -n 1
+
+[ "$UID" != 0 ] && su=sudo
+
+# Backup and replace current mirrorlist file
+{ echo " Backing up the previous mirrorlist..."
+  $su mv -i /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.prev; } &&
+{ echo " Rotating the new list into place..."
+  $su mv -i "$tmpfile" /etc/pacman.d/mirrorlist; }

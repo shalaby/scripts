@@ -1,0 +1,28 @@
+#!/bin/bash
+# Convert svgs to pngs
+
+# Usage if full argument isn't given
+if [[ -z "$@" ]]; then
+    echo " svg2png <width> <image(s)> - converts, resizes and renames svg to png" && exit
+fi
+
+
+case $1 in
+  w ) shift
+      width="$1"
+      # Detect if width is a number
+      if ! [[ "$width" =~ ^[0-9]+$ ]]; then
+        echo " Detected that width value is not a number: "$width""
+        exit
+      fi
+      # Bug: rsvg-convert through bash is unable to work outside the orignial svg
+      # current directory
+      shift
+      for i in "$@"; do
+        rsvg-convert -w "$width" "$i" -o "${i%.*}"-"$width".png
+      done ;;
+  * ) for i in "$@"; do
+        rsvg-convert "$i" -o "${i%.*}".png
+      done ;;
+esac
+      

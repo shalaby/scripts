@@ -1,0 +1,29 @@
+#!/bin/bash
+# Download package source files
+
+# Download directories for source files (official and for the AUR) are defined
+# /etc/abs.conf and in the cower config respectively
+
+# Program(s) required
+progs_req=(abs cower)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <repository/package> - download official/AUR package source files"
+  exit
+fi
+
+off_repos="$(grep ^REPOS /etc/abs.conf | sed -e 's/REPOS=(//' -e 's/!//g' -e \
+  's/ /\n  /g' -e 's/^/  /')"
+ofr_cases="$(grep ^REPOS /etc/abs.conf | sed -e 's/REPOS=(//' -e 's/!//g' -e \
+  's/ /\/* | /g' | perl -p -e 's/\n/\/*/')"
+
+eval "case \$1 in
+  aur*        ) cower -d "${1#*/}"                                            ;;
+  $ofr_cases  ) abs "$1"                                                      ;;
+  *           ) printf ' Unknown repository:\n$off_repos\n'                   ;;
+esac"

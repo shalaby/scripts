@@ -1,0 +1,25 @@
+#!/bin/bash
+# akau - toggle safe mode
+
+# Password check variables
+rootpw=$(grep ^root /etc/shadow | awk -F : '{ print $2 }')
+rootpwsaved=$(cat /root/passroot)
+
+toddpw=$(grep ^todd /etc/shadow | awk -F : '{ print $2 }')
+toddpwsaved=$(cat /root/passtodd)
+
+# Running network check variable
+netcheck=$(ls /var/run/daemons/ | grep -w network)
+
+# Check if user is root
+[ $(whoami) != "root" ] && echo "You are not root." && exit
+
+# Toggle: random password and network connect; safe password, network stop
+if [ "${rootpw}" == "${rootpwsaved}" ] && [ "${toddpw}" == "${toddpwsaved}" ]
+then
+  randompass
+  [ -z "$netcheck" ] && /etc/rc.d/network start
+else
+  [ -n "$netcheck" ] && /etc/rc.d/network stop
+  randompass
+fi

@@ -1,0 +1,11 @@
+#!/bin/bash
+# Record through mic
+
+#sv_loc=$HOME/Desktop/
+
+if [ -z $@ ]; then
+  echo "sndrecord <filename>.wav - records sounds through the microphone"
+  exit
+fi
+
+arecord -f cd "$@".wav

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+clear
+printf "%s" "The counter is now: "
+
+for (( counter=1; counter<10; counter++ )) ; do
+    printf "%d\b" "$counter"
+    sleep 1
+done
+
+printf "\n"
+
+exit 0

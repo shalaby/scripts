@@ -1,0 +1,27 @@
+#!/bin/bash
+# List information about a video
+
+# Program(s) required
+progs_req=(mplayer)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <video.ext> - list information about a video"
+  exit
+fi
+
+# Text color variables
+bldwht='\e[1;37m'       # white
+txtrst='\e[0m'          # Text reset
+
+# Check if selection exists
+if [ ! -e "$@" ]; then
+  echo " Selection \""$@"\" does not exist."
+  exit
+fi
+
+mplayer -vo null -ao null -identify -frames 0 "$@"

@@ -1,0 +1,15 @@
+#!/bin/bash
+# Touchpad-button-fix - toggles left and right mouse/touchpad buttons and back
+# Again (fixes issue with missed touchpad buttons clicks)
+
+# Detect mouse button position, switch mouse button position, then switch back
+for l in {1..2}; do
+  state=$(xmodmap -pp | sed -n '5p' | awk '{ print $2 }') # detect button posit.
+  if [ "$state" == "1" ]; then
+    xmodmap -e "pointer = 3 2 1" &> /dev/null
+    sleep 2
+  else
+    xmodmap -e "pointer = 1 2 3" &> /dev/null
+  fi
+done 
+

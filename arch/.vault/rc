@@ -1,0 +1,44 @@
+#!/bin/bash
+# rc - start/stop/restart Arch Linux daemons
+
+# Text color variables
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) # Bold red
+bldgrn=${txtbld}$(tput setaf 2) #      green
+bldblu=${txtbld}$(tput setaf 4) #      blue
+bldwht=${txtbld}$(tput setaf 7) #      white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+
+chk_status() {
+  target=$1
+  if [ $target != "functions" ] && [ $target !=  "functions.d" ]; then
+    if [ -f "/var/run/daemons/$target" ]
+     then
+       stat="${bldgrn}[*]${txtrst}"
+     else
+       stat="${bldred}[*]${txtrst}"
+     fi
+    printf "$stat ${bldblu}$target${txtrst}\n"
+
+  fi
+ }
+
+ daemons=$(ls /etc/rc.d/)
+
+if [ -n "$2"  ]; then
+  /etc/rc.d/$1 $2; else
+  echo "rc <init-script> <start/stop/restart>"
+  echo ""
+  echo "$info Daemon list:"
+  if [[ $1 != "" ]]
+  then
+   chk_status $1
+  else
+   for d in $daemons
+    do
+     chk_status $d
+   done | sort
+  fi
+  echo ""
+fi

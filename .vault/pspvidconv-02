@@ -1,0 +1,71 @@
+#!/bin/bash
+# Convert videos to PSP
+
+# Settings
+vid_dir=/run/media/$USER/PSP/VIDEO  # For Gnome 3, Gnome 2: /media/PSP/VIDEO
+vid_vcd="-vcodec mpeg4 -vtag xvid"  # Video codec: xvid
+vid_vcd="-vcodec libx264"           # Video codec: x264
+vid_vcd="-vcodec h264"
+vid_res=320x240                     # 320x240 for PSP 1001, 480x272 for 2001
+vid_vbr=768k                        # Video bit rate, was 1024
+vid_vfr=29.97                       # Video frame rate
+vid_acd=aac                         # Audio codec to use (libfaac for some)
+vid_aab=64k                         # Audio bit rate
+vid_aar=48000                       # Audio sampling frequency
+vid_aac=2                           # Audio number of channels
+fns_snd=/usr/share/sounds/alsa/Front_Center.wav
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <d*> <video(s)> - Convert videos to PSP (d to use directory)"
+  exit
+fi
+
+# Check that PSP is plugged in
+if [ ! -d $vid_dir ]; then
+  echo " It appears that the PSP is not plugged in, no "$vid_dir"."
+  exit
+fi
+
+# Use sub-directory
+if [ "$1" == "d" ]; then
+  while true; do
+    read -p " Create a new directory? (y/n): " yn
+    case $yn in
+      [Yy] )  read -p " Directory name (no spaces): " newdir
+              vid_dir="$vid_dir"/"$newdir"
+              mkdir "$vid_dir" && break 2;;
+      [Nn] )  printf " Select PSP VIDEO sub-directory:\n"
+              select vid_sub in "$vid_dir"/*/
+                do
+                  vid_dir="$vid_sub"
+                  test -n "$vid_dir" && break 2
+                  echo " Select 1, 2, ..."
+                done ;;
+      * )     echo " Answer (y)es or (n)o."
+    esac
+  done
+  shift
+fi
+
+# Check if selection(s) exists
+for vid in "$@"; do
+  if [ ! -f "$vid" ]; then
+    echo " Selection \""$vid"\" does not exist."
+    exit
+  fi
+done
+
+# Convert, save to PSP video directory
+for vid in "$@"; do
+  vid_out="${vid/:/-}"            # ffmpeg not allowing outputs of ':', '?'
+  vid_out="${vid_out/\?/}"        # http://tinyurl.com/ffmpeg-filename-colon
+  #vid_out="${vid_out%.*}"-PSP.mp4 # Append '-PSP' to filename
+  thm_out="${vid_out%.*}".thm
+  # Encode video
+  ffmpeg -i file:"$vid" $(printf "%s" "$vid_vcd") -s "$vid_res" -b:v "$vid_vbr" -r "$vid_vfr" -acodec "$vid_acd" -b:a "$vid_aab" -ar "$vid_aar" -ac "$vid_aac" -f psp -strict -2 -y "$vid_dir"/"$vid_out"
+  # Create thumbnail
+  ffmpeg -i file:"$vid" -f image2 -ss 50 -vframes 1 -s 160x120 "$vid_dir"/"$thm_out"
+done && aplay "$fns_snd"
+
+# HandBrakeCLI -i Michael\ Anti\ Behind\ the\ Great\ Firewall\ of\ China.mp4 -o MA.mp4 -e x264 -b 2000 -a 1 -E faac -B 160 -R 48 -6 dpl2 -f mp4 -x level=30:ref=2:mixed-refs:bframes=3:weightb:subme=9:direct=auto:b-pyramid:me=umh:analyse=all:no-fast-pskip:filter=-2,-1

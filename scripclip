@@ -1,0 +1,15 @@
+#!/bin/bash
+# Create HTML defined syntax highlighting of script file, copy contents of file
+# to clipboard, and delete html file.
+
+vm_html_sc=vim2html # script to convert vim syntax highlighting to html
+fl_clip_sc=cb-in    # script to copy file to Xorg clipboard
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <script> - Create HTML-defined syntax highlighting of script and copy its' contents to the Xorg server clipboard." | fmt -c -u -w 80
+  exit
+fi
+
+# Convert script to html colored syntax highlighting, copy to Xorg server clip.
+$vm_html_sc "$@" && $fl_clip_sc "$@".html && rm "$@".html

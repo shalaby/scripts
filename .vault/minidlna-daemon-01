@@ -1,0 +1,52 @@
+#!/bin/bash
+# Start and stop the MiniDLNA daemon
+
+cnffile="/home/$USER/.config/minidlna/minidlna.conf"
+pidfile="/home/$USER/.config/minidlna/minidlna.pid"
+logfile="/home/$USER/.config/minidlna/minidlna.log"
+
+# Program check
+hash minidlna 2>&- || \
+  { echo >&2 " Program required \"minidlna\" not installed."; exit 1; }
+
+# Check if configuration exists
+[ -f "$cnffile" ] || { echo " No config found at \"$cnffile\"."; exit 0; }
+
+dmn_strt () {
+  minidlna -f "$cnffile" -P "$pidfile" > "$logfile" 2>&1 && \
+  echo " Started MiniDLNA daemon"
+}
+
+dmn_stop () {
+  if [ -s "$pidfile" ]; then
+    [ "$(pgrep -x minidlna)" ] || \
+      { echo " Not stopped, MiniDLNA is not running"; exit 0; }
+    kill $(cat "$pidfile") > /dev/null 2>&1
+    rm -rf "$pidfile"
+    echo " Stopped MiniDLNA daemon"
+  else
+    echo " MiniDLNA is not running"
+  fi
+}
+
+dmn_rscn () {
+  minidlna -f "$cnffile" -P "$pidfile" -R > "$logfile" 2>&1 && \
+  echo " Rescaning and starting MiniDLNA daemon"
+}
+
+help     () {
+  echo " ${0##*/} <start|stop|rescan> - start,stop,rescan the MiniDLNA daemon"
+}
+
+case $1 in
+  start   ) # Start daemon
+            dmn_stop
+            dmn_strt ;;
+  stop    ) # Stop daemon
+            dmn_stop ;;
+  rescan  ) # Rescan for new files (file detection only works when running)
+            dmn_stop
+            dmn_rscn ;;
+  *       ) # Display usage if no parameters given
+            help
+esac

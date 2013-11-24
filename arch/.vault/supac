@@ -1,0 +1,12 @@
+#!/bin/bash
+# Toggle pacman rights in visudo
+
+user=todd
+sudocheck=$(grep "#$user  ALL=NOPASSWD: /usr/bin/pacman" /etc/sudoers)
+
+if [[ -n $sudocheck ]]; then
+  sed -i -e "s~#$user  ALL=NOPASSWD: /usr/bin/pacman~$user  ALL=NOPASSWD: /usr/bin/pacman~g" /etc/sudoers
+  echo " allowing $user pacman privledges"; else
+  sed -i -e "s~$user  ALL=NOPASSWD: /usr/bin/pacman~#$user  ALL=NOPASSWD: /usr/bin/pacman~g" /etc/sudoers
+  echo " removing $user pacman privledges"
+fi

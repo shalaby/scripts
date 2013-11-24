@@ -1,0 +1,25 @@
+#!/bin/bash
+# Resize picture(s) for blog post picture
+# Http://www.imagemagick.org/www/command-line-options.html
+
+# Program(s) required
+progs_req=(convert)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+pic_width=150   # width of picture
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <image> - resize picture to pixel width $pic_width for blog post picture"
+  exit
+fi
+
+# Create new resized picture
+for pic_name in "$@"; do
+  pic_name_resize="${pic_name%.*}"-"$pic_width".jpg
+  convert -resize "$pic_width" -quality 95 "$pic_name" "$pic_name_resize"
+  [ -f "$pic_name_resize" ] && echo " Post picture "$pic_name_resize" created"
+done

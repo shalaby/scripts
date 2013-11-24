@@ -1,0 +1,28 @@
+#!/bin/bash
+# vim2thmlpage - convert a scripts vim syntax highlighting to a webpage.
+
+FILENAME=$1
+VIMTHEME=$2
+
+if [[ -z $FILENAME ]]; then
+    echo "vim2htmlpage <filename> <vim-theme>  -  default theme: soso"
+    exit;
+fi
+
+if [[ -z $VIMTHEME ]]; then
+    VIMTHEME="${VIMTHEME:-soso}"
+fi
+
+vim -f  +"syntax on" \
+        +"colorscheme $VIMTHEME" \
+        +"let html_use_css=1" \
+        +'let html_use_encoding = "utf8"' \
+        +"let html_number_lines = 0" \
+        +"TOhtml" \
+        +"wq" \
+        +"q" "$FILENAME"
+
+# I had trouble with the a css-defined pre values in firefox
+# rendering text normal, deleted it and was ok.
+
+sed -i '/pre {/d' $1.html

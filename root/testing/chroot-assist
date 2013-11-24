@@ -1,0 +1,96 @@
+#!/bin/bash
+# Change apparent root directory
+
+# 64bit, i686 check
+# mount tmpfs fail check
+# mtab, resolv.conf
+
+# Need to be root check
+if [[ $EUID -ne 0 ]]; then
+  echo "* You must have root privledges to be able to change root" 1>&2
+  exit 10
+fi
+
+# Select partition
+while true; do
+  # List available partitions
+  read -p "? List available partitions? (y/n): " list_partitions
+  case $list_partitions in
+    [Yy]* ) fdisk -l | grep ^/dev/ ; break ;;
+    [Nn]* ) break ;;
+    * ) echo "* Answer (Y/y)es or (N/n)o." ;;
+  esac
+  # Prompt for partition to use
+  read -p "? Root partition to mount (e.g. /dev/sda1): " device_partition
+  # Verify selection is a block device
+  if [ ! -b "$device_partition" ]; then
+    echo "* Selection ("$device_partition") does not exist"; break
+  fi
+  # Verify selection is a a partition
+  valid_partitions=$(awk '{print $4}' /proc/partitions | grep [0-9])
+  partition=$(echo "$device_partition" | cut -d "/" -f 3)
+  if [ -z $(echo $valid_partitions | grep -w $partition) ]; then
+    echo "* Selection ("$device_partition") is not a valid partition"; break
+  fi
+  echo "* Selection ("$device_partition") is a valid partition."
+done
+
+# Mount partition
+# Use current mount point (if already mounted)
+if [ -n $(grep ^"$device_partition" /etc/mtab) ]; then
+  mount_point=$(grep "$device_partition" /etc/mtab | cut -d " " -f 2)
+  echo "* Selection ("$device_partition") already mounted at "$mount_point"."
+# Create new mount point
+else
+  mount_point=/mnt/$partition
+  # Create directory (if doesn't exist), otherwise be sure directory is empty.
+  if [ -d $mount_point ]; then 
+    if (shopt -s nullglob dotglob; f=($mount_point/*); ((! ${#f[@]}))); then
+      echo "* The mount point directory ($mount_point) already exists and is empty."
+    else
+      echo "* The mount point directory ($mount_point) already exists but contains files; cleanup before continuing."
+      exit 20
+    fi
+  else
+    echo "* Creating directory for mount point: $mount_point"
+    mkdir -p $mount_point
+  fi
+  echo "* Mounting $device_partition to $mount_point:"
+  mount $device_partition $mount_point || echo "* Error mounting.  Exiting"
+  grep ^$mount_point /etc/mtab
+fi
+
+# Check if valid root partition
+temp_fs="/dev /dev/pts /proc /sys"
+for r in $mount_point"$temp_fs" $mount_point/bin/bash; do
+  if [ ! -e "$mount_point""$r" ]; then
+    echo "* Doesn't not appear to be a valid root partition."
+    exit 30
+  fi
+done
+
+# Mount temporary filesystems (too lazy here with -B option?)
+for temp_fs_chr in "$mount_point"$temp_fs; do
+  if ! grep -qs $temp_fs_chr /proc/mounts; do
+    mount -B $temp_fs $temp_fs_chr
+    echo "* Temporary filesystem $temp_fs mounted to $temp_fs_chr"
+  else
+    echo "* Temporary filesystem $temp_fs already mounted to $temp_fs_chr"
+  fi
+done
+
+# Change root
+while true; do
+  read -p " Change root to $device_partition at "$mount_point"?: (y/n)" $chngrt
+  case $chngrt in
+    [Yy]* ) echo "* Changing root."
+            echo '* For an informative prompt use: export PS1="(chroot) $PS1"'
+            echo "* When you 'exit' the chroot, remember to unmount:"
+            echo "umount "$mount_point"{/dev,/dev/pts,/proc,/sys}"
+            echo "umount "$mount_point""
+            chroot $mount_point /bin/bash ; break ;;
+    [Nn]* ) exit 40 ;;
+    * ) echo "* Answer (Y/y)es or (N/n)o." ;;
+  esac
+done
+

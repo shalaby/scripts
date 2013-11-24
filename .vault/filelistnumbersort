@@ -1,0 +1,5 @@
+#!/bin/bash
+# Sort numbers correctly
+
+dirorder=$(find . -type d | sort -n -k6 -k7 | tr '\n' '\0' | xargs -0 cat)
+

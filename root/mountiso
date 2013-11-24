@@ -1,0 +1,31 @@
+#!/bin/bash
+# Mount ISOs (.iso)
+
+mnt_dir=/mnt/iso
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <name.iso> - mount ISO images"
+  exit
+fi
+
+# Check if root
+if [ $(whoami) != root ]; then
+  echo " Must be root to mount."
+  exit
+fi
+
+# Check if selection exists
+if [ ! -f "$@" ]; then
+  echo " Selection \""$@"\" does not exist."
+  exit
+fi
+
+# Check if mount directory exists
+if [ ! -d "$mnt_dir" ]; then
+  echo " Mount directory \""$mnt_dir"\" does not exist."
+  exit
+fi
+
+mount -o loop -t iso9660 "$ISONAME" "$mnt_dir" && \
+echo " Mounted \""$@"\" to \""$mnt_dir"\""

@@ -1,0 +1,133 @@
+#!/bin/bash
+# Create a github gist repository for sharing scripts/configs on blog
+
+# Base directory, repository parent directory
+base_dir=""$HOME"/"
+repo_par=""$HOME"/.github-gist/"
+
+# File list (File list order must match repository order)
+files=('/home/todd/.scripts/root/arch/pm'
+       '/home/todd/.scripts/others/github-sync-scripts'
+       '/home/todd/.scripts/vault/unity-effects'
+       '/home/todd/.scripts/pwr'
+       '/home/todd/.bashrc'
+       '/home/todd/.scripts/ripcd'
+       '/home/todd/.scripts/normalize-audio'
+       '/home/todd/.scripts/template'
+       '/home/todd/.scripts/template-basic'
+       '/home/todd/.scripts/others/vim2html'
+       '/home/todd/.scripts/bugfixes/externalmonitor'
+       '/home/todd/.config/autostart/externalmonitor.desktop'
+       '/etc/pm/sleep.d/90_externalmonitor'
+       '/home/todd/.scripts/sitepass-ls'
+       '/home/todd/.scripts/sitepass-gn'
+       '/home/todd/.scripts/sitepass-cb'
+       '/home/todd/.scripts/bugfixes/touchpad-button-fix'
+       '/home/todd/.scripts/rm'
+       '/home/todd/.scripts/others/mp3cat-mdir'
+       '/home/todd/.scripts/others/g9led-random-color'
+       '/home/todd/.config/autostart/g9led-random-color.desktop'
+       '/etc/pm/sleep.d/95_g9led-random-color'
+       '/home/todd/.scripts/calc'
+       '/home/todd/.scripts/others/atget'
+       '/home/todd/.scripts/rps'
+       '/home/todd/.scripts/others/cmtstrip'
+       '/home/todd/.scripts/others/grok'
+       '/home/todd/.scripts/unpack'
+       '/home/todd/.scripts/pack'
+       '/home/todd/.scripts/backup/bckcfg'
+       '/home/todd/.scripts/others/ff-restore'
+       '/home/todd/.scripts/root/purge-memory'
+       '/home/todd/.scripts/bgcmd'
+       '/home/todd/.scripts/cb-in'
+       '/home/todd/.scripts/cb-out'
+       '/home/todd/.scripts/others/github-sync-gist'
+       '/home/todd/.scripts/root/arch/pm'
+       '/home/todd/.scripts/root/arch/mp'
+       '/home/todd/.scripts/root/arch/pacpull'
+       '/home/todd/.Arachnophilia/ArachConf/Arach.ini'
+       '/home/todd/.Arachnophilia/Macros/Macros.xml'
+       '/home/todd/.scripts/others/md2wp'
+       '/home/todd/.scripts/pspvidconv')
+
+# Repositories (repo_address)
+repos=('2840389'
+       '2839879'
+       '2840553'
+       '2843630'
+       '2844190'
+       '2844265'
+       '2844272'
+       '2844305'
+       '2844306'
+       '2844801'
+       '2844866'
+       '2844966'
+       '3066195'
+       '2844933'
+       '2844934'
+       '2844935'
+       '2844992'
+       '2845277'
+       '2848140'
+       '2848180'
+       '2848197'
+       '2848198'
+       '2851690'
+       '2851829'
+       '2853010'
+       '2853011'
+       '2858162'
+       '2861045'
+       '2861046'
+       '2867176'
+       '2867295'
+       '2884577'
+       '2886277'
+       '2888206'
+       '2888207'
+       '2888412'
+       '2948662'
+       '2974884'
+       '3019486'
+       '3050300'
+       '3050307'
+       '3079785'
+       '3123937')
+
+# Program(s) required
+progs_req=(jist)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Help
+help () {
+echo " ${0##*/} <option> <*file> - Add or update gist repo(s)
+  a - Add gist repo for file(s)
+  u - Update all gist repos for all files"
+}
+
+# Options
+case $1 in
+ a )  # Upload new files to github gist
+      shift
+      for file in "$@"; do
+        # Upload file (cut second line to use as description); print output
+        url_address="$(jist -p -d "$(sed -n '2p' "$file" | sed 's/^# //')" -f "$file".sh "$file")"
+        echo " ---"
+        echo " filenm path: "$(readlink -f "$file")""
+        echo " gist number: "${url_address##*/}""
+        echo " url address: "$url_address""
+      done
+      echo " ---"
+      echo " Enter filemame path and gist number in script to enable updating them."
+      echo " ---" ;;
+ u )  # Update gist files
+      n=${#files[@]} # number of elements in array (needed to sync two arrays)
+      for (( i=0; i<n; i++ )); do
+        jist "${files[$i]}" -u "${repos[$i]}"
+      done  ;;
+  * ) help  ;;
+esac

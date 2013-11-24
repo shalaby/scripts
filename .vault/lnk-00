@@ -1,0 +1,74 @@
+#!/bin/bash
+# Link files/folders without broken links and feedback
+
+# Text color variables
+txtred='\e[0;31m' # red
+bldgrn='\e[1;32m' # green
+bldcyn='\e[1;36m' # cyan
+txtrst='\e[0m'    # text reset
+
+# Display usage if no parameters given
+if [[ -z "$2" ]]; then
+  echo " lnk <file-or-folder> <link-to-location>"
+  exit
+fi
+
+# Check if file or folder exists
+if [[ ! -f $1 ]] && [[ ! -d $1 ]]; then
+  echo -e "${bldred}!${txtrst} File/folder does not exist"
+  exit
+fi
+
+# Variables to check if link points to a folder or to a new link
+linkdir=${2%/}/${1##*/}
+linknew=$2
+
+# Check if the link name matches another link
+if [[ -L $linkdir ]] || [[ -L $linknew ]]; then
+  echo -e "${bldred}!${txtrst} Link already exists:"
+  if [[ -L $linkdir ]]; then
+    echo " $(ls -la --color=always $linkdir | awk '{printf $8" "$9" "$10}')"
+  fi
+  if [[ -L $linknew ]]; then
+    echo " $(ls -la --color=always $linknew | awk '{printf $8" "$9" "$10}')"
+  fi
+  exit
+fi
+
+# Check if link name matches a file name
+if [[ -f $linkdir ]] || [[ -f $linknew ]]; then
+    echo -e "${bldred}!${txtrst} File already exists with that name:"
+  if [[ -f $linkdir ]]; then
+    echo " $(ls -la --color=always $linkdir | awk '{printf $1" "$8}')"
+  fi
+  if [[ -f $linknew ]]; then
+    echo " $(ls -la --color=always $linknew | awk '{printf $1" "$8}')"
+  fi
+  exit
+fi
+
+# Create symbolic link
+#'ln' needs path argument for linking a file in the current directory
+# realpath extracts '\'s before spaces
+fpath=`realpath "$1" | sed -e 's: :\\ :g'`
+ln -s "$fpath" $2
+
+# Display colors for full file path, link same path, link new path
+fpathdis=${bldgrn}$fpath${txtrst}
+linkdirdis="${bldcyn}$(realpath -s "$linkdir")${txtrst}"
+linknewdis="${bldcyn}$(realpath -s $linknew)${txtrst}"
+
+# Display linked file
+if [[ -L $linkdir ]]; then
+  echo -e " $fpathdis -> $linkdirdis"
+fi
+
+if [[ -L $linknew ]]; then
+  echo -e " $fpathdis -> $linknewdis"
+fi
+
+# Limitations
+# because lnk must check if the link points to a folder or a new linkname
+# if creating a link of a file that has the same name as a directory
+# and the link has the same name as a link in that directory, lnk will
+# fail from a link check

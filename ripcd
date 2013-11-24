@@ -1,0 +1,48 @@
+#!/bin/bash
+# Rip CDs with given presets (requires cd-discid, sendmail )
+
+# Audio directory
+aud_dir=~/Audio
+
+# Sub-directory selection
+printf "Select directory to rip disk to:\n"
+select aud_sub_dir in "$aud_dir"/*/
+  do
+    test -n "$aud_sub_dir" && break
+    echo "Select 1, or 2..."
+  done
+
+# RipIT variables
+preset=extreme  # MP3 encoding quality: extreme 256 kbps, Variable Bit Rate
+[ "$aud_sub_dir" == "~/Audio/Audiobooks/" ] && preset=64 # 64 kbps for Audiobook
+dirtemplate='"$artist/$album"'        # artist directory, sub-directory album
+playlist=1                            # playlist creation (1 on, 0 off)
+loop=1                                # loop RipIT for multiple CDs
+nicerip=15                            # priority of RipIT
+coverpath=/tmp/coverart.jpg           # coverart to embed in MP3s
+if [ -f "$coverpath" ]; then          # option to add to embed coverart in MP3
+                                      # (appears to not work at this time)
+  covercmd="--coverart 1 --coverpath "$coverpath""
+fi
+#nointeraction="--nointeraction"       # use first CDDB entry and rip w/o prompt
+
+# RipIT variables for MusicBrainz database (if selected)
+read -p "Use MusicBrainz database? (y/n): " yn
+  case $yn in
+    [Yy]* ) mbname="Gen2ly"            # MusicBrainz username (for submissions)
+            mbpass="$(cat ~/Others/Computer/sitepass.txt)"  # Password
+            mb="--mb --mbname "$mbname" --mbpass "$mbpass"";;
+  esac
+
+# Rip CD
+ripit                               \
+  --preset $preset --vbrmode new    \
+  --outputdir "$aud_sub_dir"        \
+  --dirtemplate $dirtemplate        \
+  --playlist $playlist              \
+  --loop $loop                      \
+  --nicerip $nicerip                \
+  $covercmd                         \
+  $nointeraction                    \
+  $mb
+

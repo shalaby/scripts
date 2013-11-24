@@ -1,0 +1,16 @@
+#!/bin/bash
+# Print login name and copy password to clipboard
+
+# List login
+#echo " Login: 707300021625"
+echo " Login: toddrpartrid"
+
+# Copy password to clipboard
+echo " Psswd: (add an '&' after)"
+sitepass-cb c
+
+# Offer to clear xclipboard
+read -p " Clear Xclipboard? (y): " Yy
+case $Yy in
+  [Yy]*  ) sitepass-cb x ;;
+esac

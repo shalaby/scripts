@@ -1,0 +1,12 @@
+#!/bin/bash
+# Kill programs that are using a mountpoint
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} </mounted/dir_name> - Force close programs using specified mountpoint"
+  exit
+fi
+
+#fuser /mnt/devicename
+fuser -k -i /dev/
+

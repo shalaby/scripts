@@ -1,0 +1,10 @@
+#!/bin/bash
+# Burn files to dvd
+
+# Display usage if no parameters given
+if [[ -z $@ ]]; then
+  echo " files2dvd <file1> <file2> <folder>..."
+  exit
+fi
+
+growisofs -Z /dev/dvd -lrJ "$@"

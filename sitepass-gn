@@ -1,0 +1,49 @@
+#!/bin/bash
+# Generate password for common and other use (websites, programs...)
+
+stpw_dir=$HOME                      # directory containing password files
+stpw_fc=$stpw_dir/.sitepass-com.txt # filename containing common passwd
+stpw_fo=$stpw_dir/.sitepass-oth.txt # filename containing other  passwd
+
+# Program(s) required
+progs_req=(pwgen)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Display usage if no parameters given
+scrp_help () {
+echo " ${0##*/} <c,o> - generate password for common use and other use.
+  c | common - generate common password
+  o | other  - generate other  password"
+}
+
+case $1 in
+  c | common )  # Check if common password file already exists. otherwise create
+                if [ -f "$stpw_fc" ]; then
+                  echo " Nothing done, existent password file:"
+                  echo " "$stpw_fc""
+                  exit
+                else
+                  pwgen --capitalize --numerals --secure -1 > "$stpw_fc" && \
+                  echo " Generated new password; saved to file:"
+                  echo " "$stpw_fc""
+                fi
+                ;;
+  o | other )   # Check if other password file already exists, otherwise create
+                if [ -f "$stpw_fo" ]; then
+                  echo " Nothing done, existent password file:"
+                  echo " "$stpw_fo""
+                  exit
+                else
+                  pwgen --capitalize --numerals --secure -1 > "$stpw_fo" && \
+                  echo " Generated new password; saved to file:"
+                  echo " "$stpw_fo""
+                fi
+                ;;
+  * )           # Display usage if no or wrong parameter given
+                scrp_help
+                exit
+                ;;
+esac

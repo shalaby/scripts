@@ -1,0 +1,10 @@
+#!/bin/bash
+# The length of a downloadable file
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo "dllength <url>"
+  exit
+fi
+
+wget --spider $@ 2>&1 | grep Length

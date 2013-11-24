@@ -1,0 +1,32 @@
+#!/bin/bash
+# apachtoggle
+
+# Text color variables
+TXT_BLD=$(tput bold)
+TXT_RED=$(tput setaf 1)
+TXT_GREEN=$(tput setaf 2)
+TXT_YLW=$(tput setaf 3)
+TXT_BLUE=$(tput setaf 4)
+TXT_PURPLE=$(tput setaf 5)
+TXT_CYAN=$(tput setaf 6)
+TXT_WHITE=$(tput setaf 7)
+TXT_RESET=$(tput sgr0)
+
+# Usage - displays if full argument isn't given.
+#if [[ -z $VARIABLE ]]; then
+#    echo "${TXT_BLD}${TXT_GREEN} * ${TXT_RESET}${TXT_YLW}program varriables${TXT_RESET} - description${TXT_RESET}"
+#    exit;
+#fi
+
+# the grep command may appear in the process list thereby producing
+# a false positve.  remove search is -v, use -q if just interesting
+# in exit status.  ps -A | grep apache | grep -vq grep
+# at times bash will not find the original apache process; then use
+# (set -o pipefail; ps -A...)
+
+#if ps -A | grep "apache" > /dev/null; then
+
+if pgrep apache > /dev/null; then
+    /etc/init.d/apache2 stop; else
+    /etc/init.d/apache2 start
+fi

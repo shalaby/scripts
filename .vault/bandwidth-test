@@ -1,0 +1,5 @@
+#!/bin/bash
+# Test bandwidth from the command line
+
+sudo netserver
+sudo netperf -c 198.82.184.145 -f K 

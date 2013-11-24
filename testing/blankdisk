@@ -1,0 +1,33 @@
+#!/bin/bash
+# Blank a cd or dvd
+
+# text color variables
+bldred='\e[1;31m' # red - bold
+bldwht='\e[1;37m' # white
+txtrst='\e[0m'    # text reset
+
+# detect variables
+dvddet1=$(hal-device | grep "volume.disc.type = 'dvd_plus_rw'")
+dvddet2=$(hal-device | grep "volume.disc.type = 'dvdrw'")
+cddet=$(hal-device | grep "volume.disc.type = 'cd_rw'")
+
+# DVD
+if [[ -n "$dvddet1" ]] || [[ -n "$dvddet2" ]]; then
+  echo -en "${bldred}!${txtrst} Blank this DVD? (${bldwht}y/n${txtrst}) "
+  read dvd
+  if [[ $dvd == [yY] ]]; then
+    dvd+rw-format -f /dev/dvd; else
+    exit
+  fi
+fi
+
+# CD
+if [[ -n "$cddet" ]]; then
+  echo -e "${bldred}!${txtrst} Blank this CD? (${bldwht}y/n${txtrst}) "
+  read cd
+  if [[ $cd == [yY] ]]; then
+    cdrecord -v dev=/dev/dvd blank=fast; else
+    #wodim -vv dev=/dev/cdrw blank=all
+    exit
+  fi
+fi

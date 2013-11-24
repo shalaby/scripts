@@ -1,0 +1,15 @@
+#!/bin/bash
+# Join pdf files
+
+pdf_jn_nm=concatenated.pdf  # filename of joined pdf
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} file1.pdf file2.pdf... - join multiple pdfs"
+  exit
+fi
+
+pdftk "$@" cat output "$pdf_jn_nm" && \
+echo " Created "$pdf_jn_nm""
+
+

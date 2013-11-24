@@ -1,0 +1,78 @@
+#!/bin/bash
+# Backup configurations
+
+# Backup destination directory
+bckp_dest="/run/media/todd/Backup/backup-configs"
+! [ -d "$bckp_dest" ] && echo " Backup folder "$bckp_dest" doesn't exist" & exit
+
+# Backup name
+comp="${HOSTNAME}"  # Computer name
+dist="arch"         # Distro
+type="configs"
+date="$(date "+%F")"
+bckp_file="$bckp_dest/$comp-$dist-$type-$date.tar.xz"
+
+# Include and exclude file locations
+scrpt_dir="/home/todd/.scripts/backup"
+incl_file="$scrpt_dir"/${0##*/}-inc.txt
+excl_file="$scrpt_dir"/${0##*/}-exc.txt
+note_file="$scrpt_dir"/${0##*/}-nte.txt
+
+scrp_help () {
+echo " ${0##*/} <i|e|n|c> - backup configurations
+  i - add to the include list a file or folder
+  e - add to the exclude list a file or folder or regexp pattern
+  n - add note
+  c - create backup"
+}
+
+del_old_bckps () {
+if [[ -n "$(find "$bckp_dest" -mtime +30)" ]]; then
+  find "$bckp_dest" -name "$distro-$type-*" -mtime +30 -exec rm {} \
+  \; && echo " Deleted backups older than one month."
+fi
+}
+
+case $1 in
+  # Add to include list file or folder
+  i ) shift
+      for f in "$@"; do
+        # Check if selection(s) exist
+        if [ ! -e "$f" ]; then
+          echo " File \""$f"\" does not exist."
+          continue
+        fi
+        # Append file/folder to include list
+        full_path=$(readlink -f "$f")
+        echo "$full_path" >> "$incl_file" && \
+        echo " Added \""$f"\" to ${0##*/} include file."
+      done
+      # Sort entries
+      sort -u "$incl_file" -o "$incl_file" ;;
+  # Add to exclude list file, folder, or regexp pattern
+  e ) shift
+      echo " * \"${0##*/}\" doesn't check if patch is correct because the exclude file can contain regexps.  Be sure the path is correct (e.g. '/mnt/win/*')" | fmt -c -u -w 80
+      read -p " Add \""$@"\" to ${0##*/} exclude file? (y/n): " add_exclude
+      if [[ "$add_exclude" == [Yy] ]]; then
+        echo "$@" >> "$excl_file" && \
+        echo " Added \""$@"\" to ${0##*/} exclude file."
+      else
+        echo " Error: \""$@"\" not added."
+      fi ;;
+  # Add to note file
+  n ) shift
+      echo ""$date"-"$(date "+%r")": "$@"" >> "$note_file" && \
+      echo " Added string to \""$note_file"\"." ;;
+  # Create backup
+  c ) # Check if backup directory exists
+      if [ ! -d "$bckp_dest" ]; then
+        echo " Directory \""$bckp_dest"\" does not exist."
+        exit
+      fi
+      # Delete old backups
+      #del_old_bckps
+      # Backup configurations
+      sudo tar --exclude-from=$excl_file --files-from=$incl_file -c --xz -f $bckp_file ;;
+  * ) # Display usage if no parameters give
+      scrp_help ;;
+esac

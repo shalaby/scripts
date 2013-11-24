@@ -1,0 +1,12 @@
+# Join multiple audio book cds to singular mp3.  Audible download aa ripped to audio cd, then used 'ripit' to mp3.  This script joins multiple folders mp3s into their original large mp3.
+
+echo "Join multiple mp3s from which folders?"
+echo -n "First folder number [0xx]: "
+read first_folder
+echo -n "   to folder number [0xx]: "
+read final_folder
+echo -n "  Name of file [name].mp3: "
+read filename
+for f in Unknown-Artist---Unknown-Album-[$first_folder-$final_folder]; do
+  cat "$f"/*.mp3 | mp3cat - - > "$filename".mp3
+done

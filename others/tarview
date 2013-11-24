@@ -1,0 +1,10 @@
+#!/bin/bash
+# View contents of tar archives
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <filename> - show contents of a tar archive"
+  exit
+fi
+
+bsdtar tvf "$@"

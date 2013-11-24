@@ -1,0 +1,52 @@
+#!/bin/bash
+# Copy common, other, and their previous password to clipboard
+
+stpw_dir=$HOME                      # directory containing password files
+stpw_dro=$stpw_dir/.sitepass-old    # directory containing old passwords
+stpw_fc=$stpw_dir/.sitepass-com.txt # filename containing common passwd
+stpw_fo=$stpw_dir/.sitepass-oth.txt # filename containing other  passwd
+stpw_fC=$(ls -1 $stpw_dro/.sitepass-com* | tail -n 1) #filename of previous comm
+stpw_fO=$(ls -1 $stpw_dro/.sitepass-oth* | tail -n 1) #filename of previous othe
+
+# Program(s) required
+progs_req=(xclip)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Display usage if no parameters given
+scrp_help () {
+echo " ${0##*/} <c,o,co,oo> - copy common, other, and previous passwords to clipb.
+  c  | common  - common
+  o  | other   - other
+  cp | comprv  - common previous
+  op | othprv  - other  previous
+  x  | clear   - clear password from clipboard"
+}
+
+case $1 in
+  c | common )  # Copy password to Xorg server clipboard
+                xclip -in -selection c "$stpw_fc" && \
+                echo " Copied password (common) to clipboard."
+                ;;
+  o | other  )  # Copy password to Xorg server clipboard
+                xclip -in -selection c "$stpw_fo" && \
+                echo " Copied password (other) to clipboard."
+                ;;
+  cp | comprv ) # Copy password to Xorg server clipboard
+                xclip -in -selection c "$stpw_fC" && \
+                echo " Copied password (common previous) to clipboard."
+                ;;
+  op | othprv ) # Copy password to Xorg server clipboard
+                xclip -in -selection c "$stpw_fO" && \
+                echo " Copied password (other previous) to clipboard."
+                ;;
+  x | clear )   echo "" | xclip -in -selection c
+                echo " Cleared password from Xorg server clipboard"
+                ;;
+  * )           # Display usage if no or wrong parameter given
+                scrp_help
+                exit
+                ;;
+esac

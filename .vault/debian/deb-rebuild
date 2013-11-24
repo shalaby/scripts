@@ -1,0 +1,12 @@
+#!/bin/bash
+# Rebuild package (good for dist-upgrade where package needs to be rebuilt for
+# new dependencies.
+# http://sleeksorrow.blogspot.com/2010/02/yet-another-ubuntu-package-rebuild.html
+
+sudo apt-get install build-essential fakeroot dpkg-dev devscripts
+sudo apt-get build-dep minidlna
+mkdir build && cd build
+apt-get source minidlna
+cd audacious-2.1/
+EMAIL=myemail@addr.ess dch -i
+dpkg-buildpackage -rfakeroot -b

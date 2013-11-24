@@ -1,0 +1,33 @@
+#!/bin/bash
+# Search for name of files/folder(s) recursively in a directory
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <d,f*> <pattern> <location>- search for directory or file"
+  exit
+fi
+
+case $1 in
+  d ) if [ -z "$3" ]; then
+        find .    -type d -iname "*$2*" | sed -e 's`^\./``g' | grep -i \
+        --color=always $2 | sort
+      else
+        find "$3" -type d -iname "*$2*" | sed -e 's/^//g' | grep -i \
+        --color=always $2 | sort
+      fi                                                                      ;;
+  f ) if [ -z "$3" ]; then
+        find .    -type f -iname "*$2*" | sed -e 's`^\./``g' | grep -i \
+        --color=always $2 | sort
+      else
+        find "$3" -type f -iname "*$2*" | sed -e 's/^//g' | grep -i \
+        --color=always $2 | sort
+      fi
+                                                                              ;;
+  * ) if [ -z "$2" ]; then
+        find .    -iname "*$1*" | sed -e 's`^\./``g' | grep -i \
+        --color=always $1 | sort
+      else
+        find "$2" -iname "*$1*" | sed -e 's/^//g' | grep -i --color=always \
+        $1 | sort
+      fi                                                                      ;;
+esac

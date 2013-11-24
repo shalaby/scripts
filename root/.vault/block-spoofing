@@ -1,0 +1,13 @@
+#!/bin/bash
+# Block spoofing attempts
+
+source_ip=$(ifconfig eth0 | grep "inet addr:" | sed -e 's/^.*r://' -e 's/ .*$//')
+
+if [[ -z "$source_ip" ]]; then
+  echo " Appear to not be on the Internet."
+  exit;
+fi
+
+# -A didn't seem to work, -I ??
+#iptables -A INPUT -i eth0 -s $SOURCE_IP -j DROP
+iptables -I INPUT -i eth0 -s $source_ip -j DROP

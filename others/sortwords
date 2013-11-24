@@ -1,0 +1,26 @@
+#!/bin/bash
+# Sort words in alphabetic order
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <*option> string1 string2 - sort strings in alphabetic order
+   l - seperate by newlines
+   q - with single quotes
+   Q - with single quotes and newlines"
+  exit
+fi
+
+case $1 in
+  l ) shift
+      echo "$@" | tr " " "\n" | sort -uVf ;;
+  q ) shift
+      echo "$@" | tr " " "\n" | sort -uVf | tr "\n" " " | sed "s/ /' '/g" \
+      | sed "s/ '$//g" | sed "s/^/'/g"
+      echo ;;
+  Q ) shift
+      echo "$@" | tr " " "\n" | sort -uVf | tr "\n" " " | sed "s/ /' '/g" \
+      | sed "s/ '$//g" | sed "s/^/'/g" | tr " " "\n"
+      echo ;;
+  * ) echo "$@" | tr " " "\n" | sort -uVf | tr "\n" " "
+      echo
+esac

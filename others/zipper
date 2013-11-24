@@ -1,0 +1,13 @@
+#!/bin/bash
+# Zip files and folders
+
+NAME=$1
+shift
+LOCATION="$*"
+
+if [[ -z $LOCATION ]]; then
+	echo "zipper <compressed-name>.zip </fileorfolders>"
+    exit;
+fi
+
+zip -r "$NAME" $LOCATION

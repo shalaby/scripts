@@ -1,0 +1,31 @@
+#!/bin/bash
+# Mount images (.img)
+
+mnt_dir=/mnt/iso
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <name.img> - mount images"
+  exit
+fi
+
+# Check if root
+if [ $(whoami) != root ]; then
+  echo " Must be root to mount."
+  exit
+fi
+
+# Check if selection exists
+if [ ! -f "$@" ]; then
+  echo " Selection \""$@"\" does not exist."
+  exit
+fi
+
+# Check if mount directory exists
+if [ ! -d "$mnt_dir" ]; then
+  echo " Mount directory \""$mnt_dir"\" does not exist."
+  exit
+fi
+
+mount -t vfat -o loop,rw "$@" "$mnt_dir" && \
+echo " Mounted \""$@"\" to \""$mnt_dir"\""

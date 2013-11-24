@@ -1,0 +1,4 @@
+#!/bin/bash
+# Show directory changes in last 24 hours
+
+find -maxdepth 1 -type f -mtime -1 -printf "%T@-%Tk:%TM - %f\n" | sort -rn | cut -d- -f2-

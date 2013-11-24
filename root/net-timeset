@@ -1,0 +1,17 @@
+#!/bin/bash
+# Set system time from network, set system clock then hardware clock
+
+# Check for root user
+#if [ $(whoami) != "root" ]; then
+#  echo " Must be root to set the clock"
+#  exit
+#fi
+
+# Set time immediately through ntp server
+
+#sudo ntpd -s
+#sudo ntpdate ntp.ubuntu.com
+sudo ntpdate pool.ntp.org
+sudo hwclock -w
+date
+# rm /var/lib/hwclock/adjtime

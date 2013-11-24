@@ -1,0 +1,63 @@
+#!/bin/bash
+# extract - extract common file formats
+
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo "$scrpt <compressedfile> <*location> - extracts common file formats"
+  exit
+fi
+
+# Test if file exists
+if [ ! -f "$1" ]; then
+  echo "Compressed archive $1 doesn't exist"
+  exit
+fi
+
+# Test if directory exists (for extracting to)
+if [ ! -d "$2" ]; then
+  echo ""$2" is not a directory"
+  exit
+fi
+
+# Extract file by using extension as reference
+case $1 in
+  *.7z)       7z x $1              ;;
+  *.bz2)      bunzip2 $1           ;;
+  *.deb)      ar vx $1             ;;
+  *.tar.gz)   if [ -z "$2" ]; then
+                tar xvf $1
+              else
+                tar xvf $1 -C "$2"
+              fi                   ;;
+  *.gz)       gunzip $1            ;;
+  *.tar)      if [ -z "$2" ]; then
+                tar xvf $1
+              else
+                tar xvf $1 -C "$2"
+              fi                   ;;
+  *.tar.bz2)  if [ -z "$2" ]; then
+                tar xvjf $1
+              else
+                tar xvjf $1 -C "$2"
+              fi                   ;;
+  *.tbz2)     if [ -z "$2" ]; then
+                tar xvjf $1
+              else
+                tar xvjf $1 -C "$2"
+              fi                   ;;
+  *.tar.xz)   if [ -z "$2" ]; then
+                tar xvf $1
+              else
+                tar xvf $1 -C "$2"
+              fi                   ;;
+  *.tgz)      if [ -z "$2" ]; then
+                tar xvzf $1; else
+                tar xvzf $1 -C "$2"
+              fi                   ;;
+  *.rar)      7z x $1              ;;
+  *.zip)      unzip $1             ;;
+  *.Z)        uncompress $1        ;;
+  *)          echo "Not a supported file format"
+                                   ;;
+esac

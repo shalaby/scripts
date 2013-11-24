@@ -1,0 +1,27 @@
+#!/bin/bash
+# Connect to the internet
+
+nic="eth0"
+dhcp="dhcpcd"
+dhcp="dhclient"
+dhcpid="/var/run/${dhcp}-${nic}.pid"
+dhcproc="$(ps aux | grep -v grep | grep dhcpcd)"
+
+ifconfig $nic up
+if [[ -n $dhcproc ]]; then
+  if [ -f $dhcpid ]; then
+      ${dhcp} -k
+  else
+    pkill ${dhcp}
+  fi
+  echo "Quit previous dhcpcd instance"
+fi
+
+echo "Connecting..."
+${dhcp} ${nic} &> /dev/null
+if [[ -n $dhcproc ]]; then
+  echo "Connected.  Test..."
+  ping -c 1 yahoo.com | grep --color=always "packets transmitted"
+else
+  echo "DHCP client timed out"
+fi

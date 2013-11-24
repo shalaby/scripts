@@ -1,0 +1,39 @@
+#!/bin/bash
+# Toggle compositing effects of the Unity desktop
+
+set -x
+
+unity_2d="unity-2d-panel unity-2d-shell unity-2d-places unity-2d-launcher unity-2d-spread "
+#unity_2d="unity-2d-panel unity-2d-shell"
+
+start_2d() {
+  # Replace window manager
+  metacity --replace &
+  sleep 2
+  # Quit desktop effects
+  killall -q compiz
+  sleep 1
+  # Start Unity 2d
+  for p in $unity_2d; do
+    "$p" &
+    sleep 1
+  done
+  clear
+}
+
+start_3d() {
+  # Quit 2d
+  kill -q $unity_2d
+  # Start 3d
+  unity --replace &
+  #compiz --replace &
+  clear
+}
+
+if ps -u "$USER" | grep -q [m]etacity; then
+  # Unity 2D is currently running.
+  start_3d
+else
+  # Unity 3D is currently running.
+  start_2d
+fi

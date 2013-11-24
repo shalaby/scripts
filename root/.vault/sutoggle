@@ -1,0 +1,12 @@
+#!/bin/bash
+# togglesu - add/remove to wheel group toggle
+
+USER="todd"
+WHEELCHECK=$(grep "$USER" /etc/group | grep wheel | grep -v grep)
+
+if [ $WHEELCHECK > /dev/null ]; then
+    gpasswd -d "$USER" wheel
+    echo " * $USER removed from wheel group"; else
+    gpasswd -a "$USER" wheel
+    echo " * $USER add to wheel group"
+fi

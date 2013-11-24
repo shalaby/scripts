@@ -1,0 +1,17 @@
+#!/bin/bash
+# Search file(s) for keyword
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo -e " ${0##*/} <string> <file/path> - search recursively for keyword in files"
+  exit
+fi
+
+if [ -z "$2" ]; then
+  loc=$(pwd)
+else
+  loc="$2"
+fi
+
+echo " Searching..."
+grep -ilr "$@" "$loc" 2>&1 | grep -v "No such" | grep -v "Permission denied" | sed "s:^\.::g" | sed "s:$(pwd)::g" | sort | uniq

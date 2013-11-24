@@ -1,0 +1,61 @@
+#!/bin/bash
+# Toggle between laptop and external monitor
+
+# Program(s) required
+progs_req=(bc)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Ports for Laptop and External monitor (AMD Catalyst drivers):
+int_mon="LVDS"    # Aspire        1366x768
+ext_mon="DFP1"    # Samsung SA350 1920x1080
+
+# Ports for Laptop and External monitor (Open-source Radeon drivers):
+#int_mon="eDP"     # Aspire        1366x768
+#ext_mon="HDMI-0"  # Samsung SA350 1920x1080
+
+# Discover if external monitor is connected
+em_test=$(xrandr | grep $ext_mon | grep " connected")
+
+# Enable external monitor if present and disable laptop monitor, else vice versa
+if [ -n "$em_test" ]; then
+  # External monitor definitions:
+  # physical screen size from xrandr (xorg detection isn't right)
+  em_ds_h=$(xrandr | grep $ext_mon | rev | cut -d " " -f 3 | rev | sed 's/mm//')
+  em_ds_v=$(xrandr | grep $ext_mon | rev | cut -d " " -f 1 | rev | sed 's/mm//')
+  em_ds="$em_ds_h"x"$em_ds_v"
+  xrandr --output $int_mon --off --output $ext_mon --auto --fbmm $em_ds
+else
+  # physical screen size from xrandr (xorg detection isn't right)
+  xrandr --output $ext_mon --off
+  xrandr --output $int_mon --auto  # monitor must be on to get display size
+  im_ds_h=$(xrandr | grep $int_mon | rev | cut -d " " -f 3 | rev | sed 's/mm//')
+  im_ds_v=$(xrandr | grep $int_mon | rev | cut -d " " -f 1 | rev | sed 's/mm//')
+  im_ds="$im_ds_h"x"$im_ds_v"
+  xrandr --output $int_mon --auto --fbmm $im_ds
+fi
+
+# Text scaling: font scaling correction depending on DPI (adjusted here because
+# Gnome considers every monitor 96 DPI for multi-monitors setups (makes
+# multiple monitors have the same text sizes).  Detection assumes square pixels.
+if [ -n "$em_test" ]; then
+  # horizontal resolution (using preferred [xrandr --auto]); , to calculate DPI.
+  em_res_h=$(xrandr | grep $em_ds_h | awk '{print $3}' | cut -d x -f 1)
+  # dpi
+  em_dpi=$(echo "scale=3;($em_res_h*25.4)/$em_ds_h" | bc)
+  em_txt_scale=$(echo "scale=4;$em_dpi/96" | bc)
+  #em_txt_scale=$(scale=3;echo "$em_txt_scale * 0.885" | bc)     # fonts too big
+  #em_txt_scale=$(scale=3;echo "$em_txt_scale * 1" | bc)     # fonts too big
+  gsettings set org.gnome.desktop.interface text-scaling-factor $em_txt_scale
+else
+  # horizontal resolution
+  im_res_h=$(xrandr | grep $im_ds_h | awk '{print $3}' | cut -d x -f 1)
+  # dpi
+  im_dpi=$(echo "scale=3;($im_res_h*25.4)/$im_ds_h" | bc)
+  im_txt_scale=$(echo "scale=4;$im_dpi/96" | bc)
+  #im_txt_scale=$(scale=3;echo "$im_txt_scale * 0.885" | bc)     # fonts too big
+  #im_txt_scale=$(scale=3;echo "$im_txt_scale * 1" | bc)     # fonts too big
+  gsettings set org.gnome.desktop.interface text-scaling-factor $im_txt_scale
+fi

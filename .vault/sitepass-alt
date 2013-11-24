@@ -1,0 +1,50 @@
+#!/bin/bash
+# sitepass - password generation for common password (websites, programs...)
+
+stpw_alt_fn=$HOME/Others/Computer/sitepass-alt.txt # filename containing passwd
+stpw_alt_old_fn=$HOME/Others/Computer/sitepass-alt-old.txt # filename con.prevpw
+
+# Program(s) required
+progs_req=(pwgen xclip)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Display usage if no parameters given
+scrpt_help () { 
+echo " ${0##*/} <option> - common password generator, copier to clipboard
+  g | gen   - generate new password and save to file
+  x | xclip - copy password to the Xorg server clipboard
+  X | xold  - copy previous password to the Xorg server clipboard" 
+}
+
+case $1 in
+  g | gen )   # Check if password file already exists, prompt to overwrite
+              if [ -f "$stpw_alt_fn" ]; then
+                read -p " Overwrite previous password file (Y/n): " Yn
+                if [ "$Yn" != Y ]; then
+                  exit
+                else
+                  rm "$stpw_alt_fn"
+                  pwgen --capitalize --numerals --secure -1 > "$stpw_alt_fn" && \
+                  echo " Created new password file: \"$stpw_alt_fn\"."
+                fi
+              else
+                  pwgen --capitalize --numerals --secure -1 > "$stpw_alt_fn" && \
+                  echo " Created new password file: \"$stpw_alt_fn\"."
+              fi
+              ;;
+  x | xclip ) # Copy password to Xorg server clipboard
+              xclip -in -selection c "$stpw_alt_fn" && \
+              echo " Copied \"alternate password\" to clipboard (current)."
+              ;;
+  X | xold )  # Copy previous password to Xorg server clipboard
+              xclip -in -selection c "$stpw_alt_old_fn" && \
+              echo " Copied \"alternate password\" to clipboard (previous)."
+              ;;
+  * )         # Display usage if no or wrong parameter given
+              scrpt_help
+              exit
+              ;;
+esac

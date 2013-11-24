@@ -1,0 +1,82 @@
+#!/bin/bash
+# pacrest - Restore from list Official and Local packages
+
+# Package list locations (official and local)
+pkglsdir=/home/todd/.bin/root/backup
+pkglsoff="$pkglsdir"/pkglist-off.txt
+pkglsloc="$pkglsdir"/pkglist-loc.txt
+
+# Local package cache location
+locpkgcache=/var/cache/pacman-local/pkg
+
+# Exclude packages
+excldoff=()
+excldloc=(kdemultimedia-kmix-oss-svn firefox-pgo-alpha-hg penumbra-collection worldofgoo)
+
+# Text color variables
+if [ $(whoami) != "cron" ]; then
+txtund=$(tput sgr 0 1)          # Underline
+txtcyn=$(tput setaf 6)          # Cyan
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}*${txtrst}
+fi
+
+# Check that the package list folder exists
+if [ ! -d "$pkglsdir" ]; then
+  echo "$warn Package list directory doesn't exist: ("$pkglsdir")"
+  echo "$info Exiting"
+  exit
+fi
+
+# Check that a package list exists
+if [ ! -f "$pkglsoff" ] && [ ! -f "$pkglsloc" ]; then
+  echo "$warn No package lists exist:"
+  echo "$warn $pkglsoff and $pkglsoff"
+  echo "$info Exiting"
+  exit
+fi
+
+# Be sure yaourt is installed
+if [[ ! -f /usr/bin/yaourt ]]; then
+  echo
+  echo "$warn requires ${txtund}}Yaourt${txtrst} to be installed."
+  echo "  ${txtcyn}http://wiki.archlinux.org/index.php/Yaourt${txtrst}"
+  echo
+  exit
+fi
+
+# Restore Official or Local?
+echo -n "Do you want to restore Official or Local packages? (${txtbld}o${txtrst}/${txtbld}l${txtrst}): "
+read restore
+
+# Restore Official
+if [ $restore = "o" ]; then
+  # Download new package database?
+  echo -n "Upgrade package database? (${txtbld}y${txtrst}/${txtbld}n${txtrst}): "
+  read updbdown
+  if [ $updbdown = "y" ]; then
+    sudo pacman -Sy
+  fi
+  sudo pacman -S --needed $(cat "$pkglsoff")
+fi
+
+# Restore Local (AUR usually)
+if [ $restore = "l" ]; then
+  # Restore dependecies in the cache
+  # TO DO
+  # Restore explicits in the cache
+  #for pkg in $(cat "$pkglsloc"); do
+  #  pkglocexps="$locpkgcache/${pkg}-$(packer -Si $pkg | grep Version | awk '{ printf $3 }')-$(uname -m).pkg.tar.gz"
+  # if [ -f $pkglocexps ]; then
+  #    sudo pacman -U --needed --noconfirm $pkglocexps
+  #  fi
+  #done
+  # If no package in cache, use yaourt.
+  yaourt -S $(cat "$pkglsloc" | grep -vx "$(pacman -Qqm)")
+fi

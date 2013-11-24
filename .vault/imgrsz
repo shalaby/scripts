@@ -1,0 +1,28 @@
+#!/bin/bash
+# Resizes an image (if only width given resizes proportionally).
+# http://www.imagemagick.org/www/command-line-options.html
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <size> <filename> -  - creates new image with resized dimensions"
+  exit
+fi
+
+size=$1
+shift
+img_nm="$@"
+img_nm_extn="${img_nm##*.}"
+img_nm_rszd="${img_nm%.*}"-"$size"."$img_nm_extn"
+convert -resize "$size" -quality 95 "$img_nm" "$img_nm_rszd"
+
+#case $1 in
+#  s | size )
+
+# Resize and rename
+#for i in ${img_nm[@]} ; do
+#echo $i
+#  img_nm_extn="${i##*.}"
+#  img_nm_rszd="${i%.*}"-"$size"."$img_nm_extn"
+#  echo $img_nm_rszd
+#  convert -resize "$size" -quality 95 "$i" "$img_nm_rszd"
+#done

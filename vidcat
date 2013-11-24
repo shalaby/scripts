@@ -1,0 +1,26 @@
+#!/bin/bash
+# Join multiple videos
+
+# Program(s) required
+progs_req=(mencoder)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <video1.ext video2.ext> - join multiple videos"
+  exit
+fi
+
+# Check if selection exists
+for v in "$@"; do
+  if [ ! -e "$v" ]; then
+    echo " Selection \""$@"\" does not exist."
+    exit
+  fi
+done
+
+ext="${$1##*.}"
+mencoder -oac copy -ovc copy -o video-concatenated."$ext" "$@"

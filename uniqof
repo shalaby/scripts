@@ -1,0 +1,16 @@
+#!/bin/bash
+# Show unique lines of two files
+
+# Display usage for incorrect number of parameters
+if [ $# -le 1 -o $# -ge 3 ]; then
+  echo " ${0##*/} <file1 file2> - Show unique lines of two files"
+  exit 1; fi
+
+# Check if selection exists
+for f in "$@"; do
+  if [ ! -f "$f" ]; then
+    echo " File non-exist: "$f""
+    exit
+  fi; done
+
+grep -Fxv -f "$1" "$2"

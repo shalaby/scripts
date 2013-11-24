@@ -1,0 +1,15 @@
+#!/bin/bash
+# Convert svgs to pngs
+
+# Usage if full argument isn't given
+if [[ -z "$@" ]]; then
+    echo " svg2png <width> <image(s)> - converts, resizes and renames svg to png" && exit
+fi
+
+# Convert SVG to PNG
+size="$1"
+shift
+for i in "$@"; do
+  rsvg-convert -w "$size" "$i" -o "${i%.*}"-"$size".png
+done
+#inkscape "$svgname" --export-png="$pngname".png -w$width -h$heigth

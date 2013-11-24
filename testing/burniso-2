@@ -1,0 +1,56 @@
+#!/bin/bash
+# Burn iso's to a cd or dvd
+
+# variables
+iso=$@
+bldgrn='\e[1;32m' # green
+bldblu='\e[1;34m' # blue
+bldwht='\e[1;37m' # white
+undwht='\e[4;37m' # white - underline
+txtrst='\e[0m'    # text reset
+
+# Display usage if no parameters given
+if [[ -z $iso ]]; then
+    echo " lkajsdflk <filename.iso> - burn iso's to CD or DVD"
+    exit
+fi
+
+# test if cd/dvd is blank, if not prompt to blank
+if [[ -n `hal-device | grep volume_label_` ]]; then
+  if [[ -n `hal-device | grep "volume.disc.type = 'dvd_plus_rw'"` ]] || \
+  [[ -n `hal-device | grep "volume.disc.type = 'dvdrw'"` ]]; then
+  echo -en "${bldred}!${txtrst} DVD is not empty, blank it? ${bldwht}(y/n)${txtrst} "
+  read dvd
+    if [[ $dvd == [yY] ]]; then
+      dvd+rw-format -f /dev/dvd
+      else
+      exit
+    fi
+  fi
+  if [[ -n `hal-device | grep "volume.disc.type = 'cd_rw'"` ]]; then
+    echo -en "${bldred}!${txtrst} CD is not empty, blank it? ${bldwht}(y/n)${txtrst} "
+    read cd
+    if [[ $cd == [yY] ]]; then
+      cdrecord -v dev=/dev/dvd blank=fast
+      else
+      exit
+    fi
+  fi
+  else
+  echo -e "${bldgrn}+${txtrst} CD/DVD is blank, continuing."
+fi
+
+# burn iso
+echo -e "${bldwht}*${txtrst} Disks written to after insertion will not be recogized as blank."
+echo -e "${bldblu}?${txtrst} Burn iso to disk? ${bldwht}(y/n)${txtrst}"
+read burn
+if [[ $burn == [yY] ]]; then
+    cdrecord -dao -v $iso; else
+    echo " exiting"
+fi
+
+#if [[ ! -n `hal-device | grep volume_empty_cd_r` ]]; then
+
+# notes
+#  - generic check for cd/dvd by volume label to see if blank
+#  - disks written/erased after insertion will not be properly recognized

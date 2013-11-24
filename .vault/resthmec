@@ -1,0 +1,82 @@
+#!/bin/bash
+# Restore home files/configs
+
+# Source Directory (Parent and Backup dir name)
+srp_dir="/mnt/Backup/rsync/"
+comp="${HOSTNAME}"; os="linux"; type="home"; date=""
+srb_dir="$comp"_"$os"-"$type"_"$date"
+
+# Destination Directory
+dst_dir="/"
+dst_dir="/home/todd/Desktop/test"
+
+# Include file location
+incl_file="${0}"-inc.txt
+
+# Test if Source Parent and Destination Directories exist
+dir_chk () {
+for d in "$srp_dir" "$dst_dir"; do
+  if [ ! -d "$d" ]; then
+    echo " Directory \""$d"\" doesn't exist." && exit
+  else
+    echo " Directory \""$d"\" exists."
+  fi
+done
+}
+
+# Select Source Directory
+slc_src () {
+printf "Select directory containing backup:\n"
+select src_dir in "$srp_dir""$srb_dir"*/
+  do
+    test -n "$src_dir" && break
+    echo " Select 1, 2, ..."
+  done
+}
+
+# Prompt for restore
+rst () {
+while true; do
+  read -p " Execute restore (y/n): " yn
+  case $yn in
+    [Yy]* ) sudo rsync -axSvR --files-from="$incl_file" --exclude-from="$excl_file" "$src_dir" "$dst_dir"
+            break ;;
+    [Nn]* ) break ;;
+    *     ) echo "  Answer 'y' for yes, 'n' for no."
+  esac
+done
+}
+
+help () {
+echo " ${0##*/} <i|ie|x> - restore home configurations/files
+  i  - add to the include list a file or folder or regexp pattern
+  ie - edit include file
+  x  - execute restore"
+}
+
+case $1 in
+  i ) # Add to include list file or folder
+      shift
+      for f in "$@"; do
+        # Check if selection(s) exist
+        if [ ! -e "$f" ]; then
+          echo " File \""$f"\" does not exist."
+          continue
+        fi
+        # Append file/folder to include list
+        full_path=$(readlink -f "$f")
+        # `readlink -f` chomps trailing slash, if exists append
+        [[ $(echo "$f" | rev | cut -b1) = / ]] && \
+        full_path="$full_path/"
+        echo "$full_path" >> "$incl_file" && \
+        echo " Added \""$f"\" to ${incl_file##*/} include file."
+      done
+      # Sort entries, erase duplicates
+      sort -u "$incl_file" -o "$incl_file" ;;
+  ie) editor=vim
+      $editor "$incl_file" ;; 
+  x ) dir_chk
+      slc_src
+      rst ;;
+  * ) help ;;
+esac

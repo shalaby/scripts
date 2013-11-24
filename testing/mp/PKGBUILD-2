@@ -1,0 +1,64 @@
+# Maintainer: Todd Partridge <toddrpartridge@gmail.com>
+
+pkgname=worldofgoo
+pkgver=1.41
+pkgrel=1
+pkgdesc="Physics based puzzle/construction game (Commercial)"
+arch=('i686' 'x86_64')
+url="http://www.2dboy.com"
+license=('custom')
+depends=('mesa' 'sdl_mixer')
+source=('test2'
+        'aawk2'
+        'pelr')
+
+
+build() {
+  # Check if installer is in build directory, than validate
+  cd $startdir
+  _instname=WorldOfGoo
+  _instmd5=f5afa40893d0fbcc37885191404f6d8c
+  if [ ! -f ${_instname}Setup.$pkgver.tar.gz ]; then
+    echo "* World of Goo is a commercial game."
+    echo "* The installer must be in:"
+    echo "* $(pwd)"
+    echo "* before this can be installed."
+    exit
+    else
+    echo "* Checking if installer is the right size..."
+    if [ "$(md5sum ${_instname}Setup.$pkgver.tar.gz | awk '{print $1}')" == "${_instmd5}" ]; then
+      echo "* Installer is the correct size"
+      else
+      echo "! The installer size check did not match."
+      exit
+    fi
+  fi
+
+  cd $srcdir
+
+  # create pkgdir folders
+  install -d $pkgdir/usr/bin
+  mkdir -p $pkgdir/usr/share/{applications,games,icons}
+  install -d $pkgdir/usr/share/licenses/$pkgname
+
+  echo "* Copying files..."
+
+  # game folder
+  cp -R $_instname $pkgdir/usr/share/games/$pkgname
+
+  # licenses
+  install -m644 $_instname/eula.txt $pkgdir/usr/share/licenses/$pkgname/
+
+  # executable link
+  ln -s /usr/share/games/$pkgname/$_instname $pkgdir/usr/bin/$pkgname
+
+  # icon/.desktop
+  install -m644 $_instname/icons/scalable.svg $pkgdir/usr/share/icons/$pkgname.svg
+  install -m644 $startdir/$pkgname.desktop $pkgdir/usr/share/applications/
+}
+
+md5sums=('78905905f5a4ed82160c327f3fd34cba'
+         '5277a9164001a4276837b59dade26af2'
+         '3f8b60b6fbb993c18442b62ea661aa6b')
+
+

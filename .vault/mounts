@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mount | grep -v "none*" | sort | column -t

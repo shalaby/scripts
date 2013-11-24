@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#for i in {16..255}; do
+#    echo -en "\e[38;5;${i}mColor $i\t"
+#    [ $((++j%6)) -eq 0 ] && echo
+#done
+
+colors=(red green yellow blue purple cyan white)
+
+for i in {1..7}; do
+    echo -en "`tput setaf ${i}` $i\t"
+    [ $((++j%3)) -eq 0 ] && echo
+done

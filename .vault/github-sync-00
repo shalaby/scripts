@@ -1,0 +1,82 @@
+#!/bin/bash
+# github-sync - sync important $HOME files to github
+
+# Base directory
+basedir="$HOME"
+
+# Files and directories to upload to github repository
+gitadd=(.bashrc .bin .vim .vimrc)
+gitignore=(.vim/backup)
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+
+cd "$basedir"
+echo "$info Preparing git local repository: ${txtund}"$basedir"${txtrst}"
+
+# Set ignore files and directories
+for i in ${gitignore[@]}; do
+  if [ ! -e "$i" ]; then
+    echo "$warn No file or directory by the name of${txtbld}"$basedir""$i"${txtrst}"
+    exit
+  else
+    echo "$i" >> .gitignore || exit
+    echo "$pass Ignore ${txtund}"$i"${txtrst} added to git index"
+  fi
+done
+
+for i in $(find .bin -type d -name "warehouse" ); do
+  echo "$i" >> .gitignore || exit
+  echo "$pass Ignore ${txtund}"$i"${txtrst} added to git index"
+done
+
+sort -u .gitignore -o .gitignore || exit
+
+# Add files and directories to git index
+for i in ${gitadd[@]}; do
+  if [ ! -e "$i" ]; then
+    echo "$warn No file or directory by the name of${txtbld}"$basedir""$i"${txtrst}"
+    exit
+  else
+    git add $i 2> /dev/null || exit
+    echo "$pass Added ${txtund}"$i"${txtrst} to git index"
+  fi
+done
+
+# Record changes to all files, rm not in index; add commit message.
+git commit -a -m "weekly update - $(date "+%F")" || exit
+echo -e "$pass Recorded repository contents, created commit message"
+
+# Start ssh-agent, enter password
+echo -e "$info Starting ssh-agent, automatically entering password (takes about five seconds)"
+
+eval $(ssh-agent)
+
+entpass=$(echo "spawn ssh-add /home/todd/.ssh/id_rsa
+expect \"Enter passphrase for key.*\"
+send \"theansweris42\\n\"
+expect eof" | expect -f -)
+
+echo $entpass || exit
+
+# Sync local to github repository
+echo -e "$info Syncing local repository to github repository"
+git push github master                # push changes to remote repository
+#git push --force github master  # non-fast-forward updates were rejected
+#git reset --hard    # wrong - reset current branch so matchs githubs on sync
+#git push origin :master            # resets branch!!! everything
+
+
+# Github setup
+# git config --global user.name "Todd Partridge"; git config --global user.email "toddrpartridge@gmail.com"
+# git init
+# git remote add github git@github.com:Gen2ly/home.git

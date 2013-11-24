@@ -1,0 +1,104 @@
+#!/bin/bash
+# ebuild2overlay [-fF] <category> <package>
+#   grabs an ebuild and adds it the local overlay
+#   adds architecture if needed
+#   ebuild-overlay does not add patchs, add these to the "files" directory
+#    in the package's overlay directory.
+#   -f "patch.name" to move a patch to the overlay.
+
+# Bugs and Todo:
+#   Cannot move ebuilds if not in current directory.
+#   PKGDIR variable filter fails for revisioned ebuilds.
+#   "ebuild2overlay category/package" argument
+#   add files flag
+
+CATEGORY=$1
+EBUILD=$2
+PORTDIR=/usr/portage
+PORTDIR_OVERLAY=/usr/local/portage
+PKGDIR="${EBUILD%-[0-9]*}"
+ACCEPT_KEYWORDS=~x86
+
+# Parse Options
+while getopts "fF:" my_opt; do
+    case $my_opt in
+        f  ) add_patch=$OPTARG;;
+        F  ) extension=$OPTARG;;
+    esac
+done
+
+# Allow options to before $1 $2
+shift $(($OPTIND - 1))
+
+# Usage Define - displayed if full argument isn't given.
+if [[ -z "$EBUILD" ]]; then
+    echo "ebuild2overlay <category> <package.ebuild>"
+    echo " (must be in currect directory of ebuild)"
+    exit;
+fi
+
+sleep 1
+
+# Is Gentoolkit Installed?
+if [[ -f "/usr/bin/ekeyword" ]]; then
+    echo " * Gentoolkit-dev installed."; else
+    echo " * Ekeyword program not found."
+    echo " * 'gentoolkit-dev' needed to use this script."
+    echo " * Exiting."
+    exit;
+fi
+
+sleep 1
+
+# Category matches Portage's?
+if grep -w "$CATEGORY" "/usr/portage/profiles/categories" > /dev/null; then
+    echo " * Valid portage directory, continuing."; else
+    echo " * Not a valid category directory!  Category must match an existing Portage directory."
+    echo " * Exiting."
+    exit
+fi
+
+sleep 1
+
+# Category directory in overlay exists?  If not create directory.
+if [[ -d $PORTDIR_OVERLAY/$CATEGORY ]]; then
+    echo " * Category directory already exists."; else
+    mkdir "$PORTDIR_OVERLAY/$CATEGORY"
+    echo " * Category directory created."
+fi
+
+sleep 1
+
+# Package directory exists?  If not create directory.
+if [[ -d $PORTDIR_OVERLAY/$CATEGORY/$PKGDIR ]]; then
+    echo " * Package directory already created, continuing..."
+        if [[ -d $PORTDIR_OVERLAY/$CATEGORY/$PKGDIR/files ]]; then
+            echo " * Package directory file directory already created, continuing..."; else
+            mkdir $PORTDIR_OVERLAY/$CATEGORY/$PKGDIR/files
+        fi; else
+    mkdir "$PORTDIR_OVERLAY/$CATEGORY/$PKGDIR"
+    mkdir "$PORTDIR_OVERLAY/$CATEGORY/$PKGDIR/files"
+    echo " * Package directory created."
+fi
+
+sleep 1
+
+# Transfer patches
+#mv $add_patch $PORTDIR_OVERLAY/$CATEGORY/$PKGDIR/files
+
+# Move ebuild to overlay, keyword ebuild, digest
+#cd $PORTDIR_OVERLAY/$CATEGORY/$PKGDIR
+if [[ -f "$EBUILD" ]]; then
+  echo " * Ebuild found, moving to appropriate directory."
+  sleep 1
+  mv "$EBUILD" "$PORTDIR_OVERLAY/$CATEGORY/$PKGDIR"
+  echo " * Keywording Ebuild."
+  sleep 1
+  ekeyword "$ACCEPT_KEYWORDS" "$PORTDIR_OVERLAY/$CATEGORY/$PKGDIR/$EBUILD"
+  echo " * Building digest for ebuild"
+  sleep 1
+  ebuild "$PORTDIR_OVERLAY/$CATEGORY/$PKGDIR/$EBUILD" digest; else
+  echo " * Ebuild not found in specified directory."
+  echo " * Exiting"
+  exit;
+fi

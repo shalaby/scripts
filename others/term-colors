@@ -1,0 +1,13 @@
+#!/bin/bash
+# Print available terminal colors
+
+for i in {1..15}; do
+    echo -en "\e[38;5;${i}m$i  "
+done
+echo -e "\n"
+
+for i in {16..255}; do
+    echo -en "\e[38;5;${i}m$i\t"
+    [ $((++j%6)) -eq 0 ] && echo
+done
+

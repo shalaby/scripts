@@ -1,0 +1,20 @@
+#!/bin/bash
+# Set options for Samsung 350A monitor (physical dimensions, gamma, text size)
+
+# -- Set physical dimensions -- (incorrectly detected by Xorg server)
+# ports (open-source radeon driver):
+int_mon="eDP"     # Aspire        1366x768
+ext_mon="HDMI-0"  # Samsung SA350 1920x1080
+# get physical screen size from xrandr, then set
+if [ -n $(xrandr | grep $ext_mon | grep " connected") ]; then
+  em_ds_h=$(xrandr | grep $ext_mon | rev | cut -d " " -f 3 | rev | sed 's/mm//')
+  em_ds_v=$(xrandr | grep $ext_mon | rev | cut -d " " -f 1 | rev | sed 's/mm//')
+  em_ds="$em_ds_h"x"$em_ds_v"
+  xrandr --output $int_mon --off --output $ext_mon --auto --fbmm $em_ds
+else
+  echo " Samsung 350A monitor not connected"
+fi
+
+# Gamma
+
+# Text size

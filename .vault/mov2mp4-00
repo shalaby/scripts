@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <name.mov> <name>.mp4 - change container from mov to mp4"
+  exit
+fi
+
+# Change containers
+ffmpeg -i "$1" -acodec copy -vcodec copy -f mp4 "$2".mp4
+  # -s (scale?) -s 480x320
+
+#HandBrakeCLI -e x264 -q 20.0 --input "$1" --output "$2".mp4
+
+#mencoder -of mpeg -ovc lavc -lavcopts vcodec=mpeg1video -oac mp3lame input.mov -o output.mpg
+# Poor rendering:
+#mencoder -of mpeg -ovc lavc -lavcopts vcodec=mpeg4 -oac faac "$1" -o "$2".mp4
+

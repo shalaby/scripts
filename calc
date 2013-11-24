@@ -1,0 +1,21 @@
+#!/bin/sh
+# Command line calculator
+
+# Display usage if no parameters given
+if [ -z "$@" ]; then
+  echo " ${0##*/} <input> <*decimals> - command line calculator (-h for examples)"
+  exit
+fi
+
+# Decimal to be carried out to (uses four unless value is given)
+if [ -z "$2" ]; then
+  decimals=4; else
+  decimals=$2
+fi
+
+case $1 in
+  -h | --help ) echo " Requires quotes.  Examples:"
+                echo ' calc "5*((2^3*2)/1.352)"'
+                echo ' calc "p=10; n=9; p*n+10"' ;;
+  *  )          echo "scale=$decimals;$1" | bc
+esac

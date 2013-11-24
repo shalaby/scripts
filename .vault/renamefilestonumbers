@@ -1,0 +1,13 @@
+# Rename files/folders to padded zero numbers
+
+n=1
+for f in *; do
+  case $n in
+  ?) nn=00$n ;; ## adjusts number of zeroes as required
+  ??) nn=0$n ;;
+  ???) nn=$n ;;
+  esac
+  mv "$f" "$nn"
+  n=$(( $n + 1 ))
+done
+

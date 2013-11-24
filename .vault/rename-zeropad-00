@@ -1,0 +1,22 @@
+#!/bin/bash
+# rename-zeropad - rename files and folders with numbering to zero-padded
+# numbering
+
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <dir> <file> <...> - rename files and folders with numbering to" 
+  echo " numbering that is zero padded (useful for correct ordering - file1 to file001)"
+  exit
+fi
+
+rename 's/\d+/sprintf("%03d",$&)/e' "$@"
+
+
+# Filter that will take input with basic numbering and zero pad it (i.e. file002)
+# e.g. mv file1.png `$(zeropad) $i`
+# http://www.walkingrandomly.com/?p=2850
+
+#num=`expr match "$1" '[^0-9]*\([0-9]\+\).*'`
+#paddednum=`printf "%03d" $num`
+#echo ${1/$num/$paddednum}

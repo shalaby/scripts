@@ -1,0 +1,30 @@
+#!/bin/bash
+
+savedir="/home/$USER/Desktop" 
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <name>.png - take screenshot of desktop or area on desktop"
+  exit
+fi
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Take screenshot
+sleep 2 && import -quality 100 "$savedir"/"$@".png
+
+if [ -f $savedir/"$@".png ]; then
+  echo "$pass Screenshot saved as ${txtund}"$savedir"/"$@".png${txtrst}."
+  else
+  echo "$warn No Screenshot taken"
+fi
+

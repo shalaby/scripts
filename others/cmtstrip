@@ -1,0 +1,30 @@
+#!/bin/bash
+# Output file without comments or blanklines
+
+# Display usage if no parameters given
+if [ -z $1 ]; then
+  echo " ${0##*/} <*c> <filename> - print file w/o comments/blanklines - (c)lipboard"
+  exit 1
+fi
+
+case $1 in
+  # Copy output to xorg server clipboard
+  c ) shift
+      # Check if selection exists
+      if [ ! -f "$@" ]; then
+        echo " Selection \""$@"\" does not exist." && exit
+      fi
+      # Exit if root (root doesn't have access to user xorg server)
+      if [[ `whoami` == root ]]; then
+        echo " Copying to clipboard cannot be user root" && exit
+      else
+        grep -vh '^[[:space:]]*\(#\|$\)' "$@" | xclip -selection c
+        echo " Comments stripped from file and copied to xorg server clipboard"
+      fi
+      ;;
+  # Print output to terminal
+  * ) if [ ! -f "$@" ]; then
+        echo " Selection \""$@"\" does not exist." && exit
+      fi
+      grep -vh '^[[:space:]]*\(#\|$\)' "$@" ;;
+esac

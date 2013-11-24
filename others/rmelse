@@ -1,0 +1,14 @@
+#!/bin/sh
+# Delete everything but one
+
+IFS="|$IFS"
+# Spaces are getting \ removed.  This though will remove the pipe |.
+space="$(echo "$*" | sed 's/ /\\\ /g')"
+echo $space
+bash -O extglob -c 'sudo rm -rf !($0)' "$*"
+
+#shopt -s extglob
+#rm -rf !("$1")
+
+#rm -rf $(ls -d --file-type * | grep -v some_file_name)
+# or ls *

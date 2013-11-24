@@ -1,0 +1,35 @@
+#!/bin/bash
+# commentstrip - output file without comments or blanklines
+
+# text color variables
+bldred='\e[1;31m' # red - bold
+bldgrn='\e[1;32m' # green
+undwht='\e[4;37m' # white - underline
+txtrst='\e[0m'    # text reset
+
+# Display usage if no parameters given
+if [ -z $1 ]; then
+  echo " commentstrip <*c> <filename> - print file w/o comments/blanklines - (c)lipboard"
+  exit 1
+fi
+
+# be sure that file exists
+if [[ ! -f $@ ]] && [[ ! -f $2 ]]; then
+  echo -e "${bldred}*${txtrst} File doesn't exist"
+  exit 2
+fi
+
+case $1 in
+  # copy output to xorg server clipboard
+  c ) shift
+      # exit if root (root doesn't have access to user xorg server)
+      if [[ `whoami` == root ]]; then
+        echo -e "${bldred}!${txtrst} Must be regular user to copy to clipboard"
+        exit 3
+        else
+        grep -vh '^[[:space:]]*\(#\|$\)' "$@" | xclip -selection c
+        echo -e "${bldgrn}+${txtrst} Stripped comments of ${undwht}$@${txtrst} and copied to xorg server clipboard"
+      fi ;;
+  # else, display output to terminal
+  * ) grep -vh '^[[:space:]]*\(#\|$\)' "$@" ;;
+esac

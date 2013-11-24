@@ -1,0 +1,35 @@
+#!/bin/bash
+# Convert videos to PSP
+
+vid_dir=/run/media/$USER/PSP/VIDEO  # For Gnome 3, Gnome 2: /media/PSP/VIDEO
+#vid_dir=/run/media/$USER/PSP/VIDEO/Explorer
+#vid_dir=/run/media/$USER/PSP/VIDEO/NGC-Specials
+vid_vcd="-vcodec mpeg4 -vtag xvid"  # Video codec: libx264, mpeg4 -vtag xvid
+vid_res=320x240                     # 320x240 for PSP 1001, 480x272 for 2001
+vid_vbr=1024k                       # Video bit rate
+vid_vfr=29.97                       # Video frame rate
+vid_acd=aac                         # Audio codec to use (libfaac for some)
+vid_aab=64k                         # Audio bit rate
+vid_aar=48000                       # Audio sampling frequency
+vid_aac=2                           # Audio number of channels
+fns_snd=/usr/share/sounds/alsa/Front_Center.wav
+
+# Check that PSP is plugged in
+if [ ! -d $vid_dir ]; then
+  echo " It appears that the PSP is not plugged in, no "$vid_dir"."
+  exit
+fi
+
+#
+
+# Convert, save to PSP video directory
+for vid in "$@"; do
+  vid_out="${vid/:/-}"            # ffmpeg not allowing outputs of ':', '?'
+  vid_out="${vid_out/\?/}"        # http://tinyurl.com/ffmpeg-filename-colon
+  vid_out="${vid_out%.*}"-PSP.mp4 # Append '-PSP' to filename
+  thm_out="${vid_out%.*}".thm
+  # Encode video
+  ffmpeg -i file:"$vid" $(printf "%s\n" "$vid_vcd") -s "$vid_res" -b:v "$vid_vbr" -r "$vid_vfr" -acodec "$vid_acd" -ab "$vid_aab" -ar "$vid_aar" -ac "$vid_aac" -f psp -strict -2 -y "$vid_dir"/"$vid_out"
+  # Create thumbnail
+  ffmpeg -i file:"$vid" -f image2 -ss 10 -vframes 1 -s 160x120 "$vid_dir"/"$thm_out"
+done && aplay "$fns_snd"

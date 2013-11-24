@@ -1,0 +1,39 @@
+#!/bin/bash
+# Link shortcut
+# Limitations: will not be able to detect source if it does not have perms.
+
+# Display usage if no parameters given
+if [ $# != 2 ]; then
+  echo " ${0##*/} <source> <link> - ln shortcut"
+  exit 1; fi
+
+# Source existence test
+if [ ! -e "$1" ]; then
+  echo "Non-exist: "$1""
+  exit; fi
+
+# Link directory existence tests
+if [ -e "$2" ]; then
+  # if directory existence
+  [ -d "$2" ] && dest=$(realpath "$2")
+else
+  # if directory is non-existent, exit
+  [[ "$2" == */ ]] && { echo "Non-exist: "$2""; exit 1; }
+  # if parent directory exists
+  if [ -d "${2%/*}" ]; then
+    dest="$(realpath "${2%/*}")/"${2##*/}""
+  else
+    echo "Non-exist: "$(dirname "$2")""
+fi
+
+# Permission test
+if [ -d "$2" ]; then
+  if [ ! -w "$2" ]; then
+  [ ! hash sudo 2>&- ] && { echo "Program required: "sudo""; exit 1; }
+  sudo=sudo; fi
+elif [ ! -d "$2" ] 
+if [ ! -w $(dirname "$2") ]; then
+  [ ! hash sudo 2>&- ] && { echo "Program required: "sudo""; exit 1; }
+  sudo=sudo; fi
+
+$sudo ln -s $(realpath "$1") "$dest"

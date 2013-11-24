@@ -1,0 +1,57 @@
+#!/bin/bash
+# aurtar - download AUR package tarball
+
+url="http://aur.archlinux.org/packages"
+builddir="/home/todd/.arch/pkgbuild/aur/"
+user=todd
+
+# Text color variables
+txtund=$(tput sgr 0 1)          # Underline
+txtbld=$(tput bold)             # Bold
+bldred=${txtbld}$(tput setaf 1) #  red
+bldblu=${txtbld}$(tput setaf 4) #  blue
+bldwht=${txtbld}$(tput setaf 7) #  white
+txtrst=$(tput sgr0)             # Reset
+info=${bldwht}*${txtrst}        # Feedback
+pass=${bldblu}*${txtrst}
+warn=${bldred}!${txtrst}
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} <package> - download AUR package tarball(s), extract to build directory"
+  exit
+fi
+
+# Check if build directory exists
+if [ ! -d $builddir ]; then
+  echo "$warn ${txtund}"$builddir"${txtrst} doesn't exist.  Exiting."
+  exit
+fi
+
+cd "$builddir"
+
+# Check existence, download AUR package tarball, set perms, loop for others
+while [ -n "$1" ]; do
+  pkgname="$1"
+  dltest=$(wget --spider "$url"/"$pkgname"/"$pkgname".tar.gz 2>&1 | \
+  grep "broken link")
+  if [[ -n $dltest ]]; then
+    echo "$warn No package by name ${txtbld}$pkgname${txtrst} in the AUR"
+    exit
+  fi
+  # Check if package directory already exists
+  if [ -d "$pkgname" ]; then
+    echo "$warn ${txtund}"$builddir"/"$1"${txtrst} already exists."
+    echo -n "Overwrite? (${txtbld}y${txtrst}/${txtbld}n${txtrst}): "
+    read overwrite
+    if [ $overwrite != y ]; then
+      continue
+    fi
+  fi
+  wget --quiet "$url"/"$pkgname"/"$pkgname".tar.gz
+  tar xf "$pkgname".tar.gz -C "$builddir"
+  chown -R $user:users "$builddir"/$pkgname
+  rm $pkgname.tar.gz
+  echo "$pass AUR tarball extracted to: ${txtund}$builddir$pkgname${txtrst}/"
+  shift
+done

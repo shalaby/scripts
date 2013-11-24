@@ -1,0 +1,26 @@
+#!/bin/bash
+# Download YouTube videos from the command line
+
+# Program(s) required
+progs_req=(youtube-dl)
+for p in ${progs_req[@]}; do
+  hash "$p" 2>&- || \
+  { echo >&2 " Program required \"$p\" not installed."; exit 1; }
+done
+
+# Display usage if no parameters given
+if [[ -z "$@" ]]; then
+  echo " ${0##*/} \"youtube.com/url\" # quotes necessary, not spaces"
+  exit
+fi
+
+urls="$(echo "$@" | sed "s/[.]https/\' \'https/g")"
+
+#for v in "$urls"; do
+for v in $@; do
+  #youtube-viewer -1 -d "$v"
+  #youtube-dl --max-quality mp4 -o "%(title)s.%(ext)s" "$v"
+  #youtube-dl "\'$urls\'"
+  youtube-dl "$v"
+  wait
+done

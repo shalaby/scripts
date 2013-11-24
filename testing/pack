@@ -1,0 +1,36 @@
+#!/bin/bash
+# Archive and compress files, folders...
+
+# Display usage if no parameters given
+if [[ -z $@ ]]; then
+  echo " ${0##*/} <file1> <dir2*>... - archive and compress files and folders"
+  exit
+fi
+
+# Discover if files and folders exist
+for file in "$@"; do
+  if [ ! -e "$file" ]; then
+    echo " File/folder \""$file"\" does not exist."
+    exit
+  fi
+done
+
+# Archive name, extension, full filename, compression method
+read -p " Name archive as (default: archive): " archive_nm
+if [ -z "$archive_nm" ]; then
+archive_nm=archive
+fi
+archive_opt_gunzip=czvpf
+archive_ext_gunzip=.tar.gz
+archive_opt_xz=cvf
+archive_ext_xz=.tar.xz
+archive_flnm="$archive_nm"$archive_ext_xz
+
+# Discover if archive already exists
+if [ -f "$archive_flnm" ]; then
+  echo " Archive "$archive_flnm" already exists"
+  exit
+fi
+
+#tar $archive_opt_gunzip "$archive_flnm" "$@"                      # gunzip comp
+tar $archive_opt_xz     -           "$@" | lzma > "$archive_flnm" # xz     comp

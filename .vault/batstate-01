@@ -1,0 +1,13 @@
+#!/bin/bash
+# batstate - show battery state
+
+bat_num=BAT1  # battery number varies
+
+# Get discharge rate, remaining capacity, calculate value
+bat_rate=$(cat /proc/acpi/battery/$bat_num/state | grep "^present rate" | awk '{print $3}')
+bat_remn=$(cat /proc/acpi/battery/$bat_num/state | grep ^remain | awk '{print $3}')
+[ "$bat_rate" == "0" ] && echo "Computer appears to be plugged in" && exit
+bat_time=$(echo "scale=3;($bat_remn/$bat_rate)" | bc)
+
+echo "$bat_time hours remaining"
+# cat /proc/acpi/battery/BAT[0,1]/info

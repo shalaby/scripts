@@ -1,0 +1,20 @@
+#!/bin/bash
+# Purge files in trash older than a week
+
+trashdirs=($HOME/.local/share/Trash/files/ $HOME/.Trash)
+days=7
+
+# Confirm trash removal
+read -p " Empty trash of file/folders older than a week? (y/n): " yn
+  case $yn in
+    [Yy]* )                                                                  ;;
+    *     ) exit                                                             ;;
+  esac
+
+# Empty trash
+for t in "${trashdirs[@]}"; do
+  if [ -d "$t" ]; then
+    echo " Emptying trash directory ("$t")..."
+    find "$t" -mtime +$days -exec rm -rf "{}" \;
+  fi
+done
